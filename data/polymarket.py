@@ -1,22 +1,36 @@
 """Fetch earnings market data from Polymarket via Dome API + CLOB."""
 import json
+import logging
+import os
 import re
 import time
 from pathlib import Path
-
 from typing import Optional, List, Dict
-
-import os
 
 import requests
 
 import config
 
+logger = logging.getLogger(__name__)
+
 GAMMA_URL = "https://gamma-api.polymarket.com/events"
 CLOB_URL = "https://clob.polymarket.com"
 DOME_URL = "https://api.domeapi.io/v1"
 DOME_API_KEY = os.environ.get("DOME_API_KEY", "")
+
+# Rate limit constants
+CLOB_RATE_LIMIT = 0.15   # seconds between CLOB calls
+GAMMA_RATE_LIMIT = 0.3   # seconds between Gamma pagination
+
 CACHE_FILE = Path(config.CACHE_DIR) / "polymarket_earnings.json"
+
+
+def _validate_dome_key() -> bool:
+    """Check if Dome API key is configured."""
+    if not DOME_API_KEY:
+        logger.warning("DOME_API_KEY not set. Falling back to Gamma API.")
+        return False
+    return True
 
 
 def _extract_ticker(title: str) -> Optional[str]:
@@ -51,17 +65,41 @@ def _extract_date_from_slug(slug: str) -> Optional[str]:
     return None
 
 
+def _fetch_with_retry(url: str, params: dict = None, headers: dict = None,
+                      max_retries: int = 3, timeout: int = 10) -> Optional[dict]:
+    """Fetch URL with exponential backoff retry."""
+    for attempt in range(max_retries):
+        try:
+            resp = requests.get(url, params=params, headers=headers, timeout=timeout)
+            resp.raise_for_status()
+            return resp.json()
+        except requests.exceptions.HTTPError as e:
+            if resp.status_code < 500:
+                logger.warning(f"HTTP {resp.status_code} for {url}: {e}")
+                return None  # don't retry client errors
+            logger.warning(f"HTTP {resp.status_code} for {url}, retry {attempt+1}/{max_retries}")
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            logger.warning(f"Network error for {url}, retry {attempt+1}/{max_retries}: {e}")
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.error(f"Invalid JSON from {url}: {e}")
+            return None
+        if attempt < max_retries - 1:
+            time.sleep(2 ** attempt)
+    logger.error(f"All {max_retries} retries failed for {url}")
+    return None
+
+
 def _get_clob_price(token_id: str) -> Optional[float]:
     """Get live price from Polymarket CLOB API."""
-    try:
-        resp = requests.get(f"{CLOB_URL}/price", params={
-            "token_id": token_id,
-            "side": "buy"
-        }, timeout=10)
-        resp.raise_for_status()
-        return float(resp.json().get("price", 0))
-    except Exception:
-        return None
+    data = _fetch_with_retry(f"{CLOB_URL}/price", params={
+        "token_id": token_id, "side": "buy"
+    })
+    if data and "price" in data:
+        try:
+            return float(data["price"])
+        except (ValueError, TypeError):
+            return None
+    return None
 
 
 def _parse_dome_market(market: dict) -> Optional[dict]:
@@ -149,41 +187,42 @@ def _parse_gamma_market(market: dict) -> Optional[dict]:
 
 def fetch_active_earnings() -> List[dict]:
     """Fetch all active (open) earnings markets via Dome API + CLOB prices."""
-    try:
-        resp = requests.get(f"{DOME_URL}/polymarket/markets", headers={
-            "x-api-key": DOME_API_KEY
-        }, params={
-            "limit": 100,
-            "search": "earnings",
-            "status": "open",
-        }, timeout=15)
-        resp.raise_for_status()
-        dome_markets = resp.json().get("markets", [])
-
-        markets = []
-        for m in dome_markets:
-            parsed = _parse_dome_market(m)
-            if parsed:
-                markets.append(parsed)
-            time.sleep(0.1)  # rate limit CLOB calls
-
-        return markets
-    except Exception as e:
-        print(f"Dome API failed ({e}), falling back to Gamma API...")
+    if not _validate_dome_key():
         return _fetch_active_earnings_gamma()
+
+    data = _fetch_with_retry(
+        f"{DOME_URL}/polymarket/markets",
+        headers={"x-api-key": DOME_API_KEY},
+        params={"limit": 100, "search": "earnings", "status": "open"},
+        timeout=15,
+    )
+    if not data or "markets" not in data:
+        logger.warning("Dome API returned no data, falling back to Gamma API")
+        return _fetch_active_earnings_gamma()
+
+    markets = []
+    for m in data["markets"]:
+        parsed = _parse_dome_market(m)
+        if parsed:
+            markets.append(parsed)
+        time.sleep(CLOB_RATE_LIMIT)
+
+    return markets
 
 
 def _fetch_active_earnings_gamma() -> List[dict]:
     """Fallback: fetch from Gamma API."""
-    resp = requests.get(GAMMA_URL, params={
+    data = _fetch_with_retry(GAMMA_URL, params={
         "active": "true",
         "closed": "false",
         "tag_id": "1013",
         "limit": 100,
     }, timeout=15)
-    resp.raise_for_status()
-    events = resp.json()
+    if not data:
+        logger.error("Gamma API also failed. Returning empty list.")
+        return []
 
+    events = data if isinstance(data, list) else [data]
     markets = []
     for event in events:
         for m in event.get("markets", []):
@@ -200,15 +239,16 @@ def fetch_closed_earnings(limit: int = 500) -> List[dict]:
     per_page = 100
 
     while len(all_markets) < limit:
-        resp = requests.get(GAMMA_URL, params={
+        data = _fetch_with_retry(GAMMA_URL, params={
             "closed": "true",
             "tag_id": "1013",
             "limit": per_page,
             "offset": page * per_page,
         }, timeout=15)
-        resp.raise_for_status()
-        events = resp.json()
+        if not data:
+            break
 
+        events = data if isinstance(data, list) else [data]
         if not events:
             break
 
@@ -222,16 +262,15 @@ def fetch_closed_earnings(limit: int = 500) -> List[dict]:
         page += 1
         if len(events) < per_page:
             break
-        time.sleep(0.3)
+        time.sleep(GAMMA_RATE_LIMIT)
 
     return all_markets[:limit]
 
 
-def fetch_order_book(token_id: str) -> Dict:
+def fetch_order_book(token_id: str) -> Optional[Dict]:
     """Fetch order book for a token from the CLOB API."""
-    resp = requests.get(f"{CLOB_URL}/book", params={"token_id": token_id}, timeout=10)
-    resp.raise_for_status()
-    return resp.json()
+    data = _fetch_with_retry(f"{CLOB_URL}/book", params={"token_id": token_id})
+    return data if data else {"asks": [], "bids": []}
 
 
 def calc_execution_price(order_book: Dict, side: str, amount_usd: float) -> Dict:
@@ -317,7 +356,7 @@ def get_execution_prices(markets: List[dict], bet_size: float = 100) -> Dict[str
                 "liquidity": m.get("liquidity", 0),
             }
         except Exception as e:
-            print(f"  Skip {ticker} order book: {e}")
+            logger.warning(f"Skip {ticker} order book: {e}")
             continue
 
     return results
@@ -334,18 +373,18 @@ def cache_all():
     import os
     os.makedirs(config.CACHE_DIR, exist_ok=True)
 
-    print("Fetching active earnings markets (Dome + CLOB)...")
+    logger.info("Fetching active earnings markets (Dome + CLOB)...")
     active = fetch_active_earnings()
-    print(f"  Found {len(active)} active markets")
+    logger.info(f"Found {len(active)} active markets")
 
-    print("Fetching closed earnings markets (Gamma)...")
+    logger.info("Fetching closed earnings markets (Gamma)...")
     closed = fetch_closed_earnings(limit=500)
-    print(f"  Found {len(closed)} closed markets")
+    logger.info(f"Found {len(closed)} closed markets")
 
     data = {"active": active, "closed": closed, "timestamp": time.time()}
     with open(CACHE_FILE, "w") as f:
         json.dump(data, f, indent=2)
-    print(f"Cached to {CACHE_FILE}")
+    logger.info(f"Cached to {CACHE_FILE}")
 
     return data
 

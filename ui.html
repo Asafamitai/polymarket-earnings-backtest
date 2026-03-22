@@ -2,7 +2,12 @@
 <html lang="he" dir="ltr">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Polymarket Earnings Backtest - Strategy analysis and P&L tracking">
+<meta name="theme-color" content="#1a1a2e">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
 <title>Earnings Backtest</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -186,9 +191,20 @@ let dateTo = null;
 let globalMinDate = null;
 let globalMaxDate = null;
 
+function escapeAttr(str) {
+  return String(str).replace(/[&'"<>]/g, c => ({'&':'&amp;',"'":'&#39;','"':'&quot;','<':'&lt;','>':'&gt;'}[c]));
+}
+
 async function loadData() {
-  const resp = await fetch('output/ui_data.json');
-  DATA = await resp.json();
+  try {
+    const resp = await fetch('output/ui_data.json');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    DATA = await resp.json();
+  } catch(e) {
+    console.error('Failed to load backtest data:', e);
+    document.getElementById('grid').innerHTML = '<div style="text-align:center;padding:40px;color:#dc2626">Error loading data. Run generate_ui_data.py first.</div>';
+    return;
+  }
   // Compute global date range
   let allDates = [];
   Object.values(DATA).forEach(c => c.history.forEach(h => allDates.push(h.date)));
@@ -218,7 +234,7 @@ function onDateChange() {
 
 function setPreset(preset) {
   document.querySelectorAll('#timeline-presets button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (event && event.target) event.target.classList.add('active');
   dateTo = globalMaxDate;
   if (preset === 'all') { dateFrom = globalMinDate; }
   else {
@@ -442,7 +458,7 @@ function render() {
     const dotClass = beatPct >= 75 ? 'green' : beatPct >= 50 ? 'gray' : 'red';
 
     return `
-      <div class="card" onclick="openModal('${c.ticker}')">
+      <div class="card" onclick="openModal('${escapeAttr(c.ticker)}')">
         <div class="card-pnl-bar ${pnl >= 0 ? 'pos' : 'neg'}" style="width:${Math.min(100, Math.abs(pnl)/30)}%"></div>
         <div class="card-header">
           <div class="card-ticker">
@@ -584,14 +600,14 @@ function closeModal(e) {
 function setModel(model) {
   currentModel = model;
   document.querySelectorAll('.model-toggle button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (event && event.target) event.target.classList.add('active');
   render();
 }
 
 function setSort(sort) {
   currentSort = sort;
   document.querySelectorAll('.sort-options button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (event && event.target) event.target.classList.add('active');
   render();
 }
 
