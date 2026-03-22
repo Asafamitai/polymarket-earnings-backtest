@@ -6,6 +6,8 @@ from pathlib import Path
 
 from typing import Optional, List, Dict
 
+import os
+
 import requests
 
 import config
@@ -13,7 +15,7 @@ import config
 GAMMA_URL = "https://gamma-api.polymarket.com/events"
 CLOB_URL = "https://clob.polymarket.com"
 DOME_URL = "https://api.domeapi.io/v1"
-DOME_API_KEY = "b5ee639d5530d47f7b0125ed464c8eb7b87aef39"
+DOME_API_KEY = os.environ.get("DOME_API_KEY", "")
 CACHE_FILE = Path(config.CACHE_DIR) / "polymarket_earnings.json"
 
 
