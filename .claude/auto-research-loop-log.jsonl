@@ -1,0 +1,2 @@
+{"event":"loop_started","timestamp":"2026-03-22T18:02:34Z","mode":"metric","max_iterations":20}
+{"event":"loop_completed","timestamp":"2026-03-22T18:04:22Z","total_iterations":0,"completion_reason":"promise"}
