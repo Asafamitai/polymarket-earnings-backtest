@@ -41,10 +41,14 @@ def _extract_ticker(title: str) -> Optional[str]:
 
 def _extract_eps_from_slug(slug: str) -> Optional[float]:
     """Extract EPS threshold from slug like 'gme-quarterly-earnings-nongaap-eps-03-24-2026-0pt37'"""
-    # Pattern: number with 'pt' as decimal point at end of slug
     match = re.search(r'(\d+)pt(\d+)$', slug)
     if match:
-        return float(f"{match.group(1)}.{match.group(2)}")
+        value = float(f"{match.group(1)}.{match.group(2)}")
+        # Validate: EPS should be in a reasonable range
+        if -500.0 <= value <= 500.0:
+            return value
+        logger.warning(f"EPS value {value} from slug '{slug}' out of range, ignoring")
+        return None
     return None
 
 
@@ -89,20 +93,54 @@ def _fetch_with_retry(url: str, params: dict = None, headers: dict = None,
     return None
 
 
+# In-memory price cache: {token_id: (price, timestamp)}
+_price_cache: Dict[str, tuple] = {}
+PRICE_CACHE_TTL = 60  # seconds
+
+
 def _get_clob_price(token_id: str) -> Optional[float]:
-    """Get live price from Polymarket CLOB API."""
+    """Get live price from Polymarket CLOB API with caching."""
+    # Check cache
+    if token_id in _price_cache:
+        price, ts = _price_cache[token_id]
+        if time.time() - ts < PRICE_CACHE_TTL:
+            return price
+
     data = _fetch_with_retry(f"{CLOB_URL}/price", params={
         "token_id": token_id, "side": "buy"
     })
     if data and "price" in data:
         try:
-            return float(data["price"])
+            price = float(data["price"])
+            _price_cache[token_id] = (price, time.time())
+            return price
         except (ValueError, TypeError):
             return None
     return None
 
 
-def _parse_dome_market(market: dict) -> Optional[dict]:
+def _batch_clob_prices(token_ids: List[str]) -> Dict[str, Optional[float]]:
+    """Fetch prices for multiple tokens, using cache where possible."""
+    results = {}
+    to_fetch = []
+
+    for tid in token_ids:
+        if tid in _price_cache:
+            price, ts = _price_cache[tid]
+            if time.time() - ts < PRICE_CACHE_TTL:
+                results[tid] = price
+                continue
+        to_fetch.append(tid)
+
+    # Fetch uncached prices
+    for tid in to_fetch:
+        results[tid] = _get_clob_price(tid)
+        time.sleep(CLOB_RATE_LIMIT)
+
+    return results
+
+
+def _parse_dome_market(market: dict, prefetched_prices: Dict[str, float] = None) -> Optional[dict]:
     """Parse a Dome API market into our format."""
     title = market.get("title", "")
     ticker = _extract_ticker(title)
@@ -117,8 +155,11 @@ def _parse_dome_market(market: dict) -> Optional[dict]:
     yes_token = market.get("side_a", {}).get("id")
     no_token = market.get("side_b", {}).get("id")
 
-    # Get live price from CLOB
-    yes_price = _get_clob_price(yes_token) if yes_token else None
+    # Get live price: prefer prefetched, fallback to individual fetch
+    if prefetched_prices and yes_token in prefetched_prices:
+        yes_price = prefetched_prices[yes_token]
+    else:
+        yes_price = _get_clob_price(yes_token) if yes_token else None
 
     return {
         "ticker": ticker,
@@ -200,12 +241,17 @@ def fetch_active_earnings() -> List[dict]:
         logger.warning("Dome API returned no data, falling back to Gamma API")
         return _fetch_active_earnings_gamma()
 
+    # Batch-fetch all CLOB prices at once (instead of one-by-one in parse)
+    dome_markets = data["markets"]
+    token_ids = [m.get("side_a", {}).get("id") for m in dome_markets if m.get("side_a", {}).get("id")]
+    logger.info(f"Batch-fetching {len(token_ids)} CLOB prices...")
+    prefetched = _batch_clob_prices(token_ids)
+
     markets = []
-    for m in data["markets"]:
-        parsed = _parse_dome_market(m)
+    for m in dome_markets:
+        parsed = _parse_dome_market(m, prefetched_prices=prefetched)
         if parsed:
             markets.append(parsed)
-        time.sleep(CLOB_RATE_LIMIT)
 
     return markets
 

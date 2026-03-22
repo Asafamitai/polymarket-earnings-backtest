@@ -1,4 +1,8 @@
 """Configuration for Polymarket Earnings Call Backtest."""
+import logging
+import os
+
+logger = logging.getLogger(__name__)
 
 # Observed Polymarket Yes prices from the earnings calendar (March 2026)
 POLYMARKET_PRICES = {
@@ -11,7 +15,7 @@ POLYMARKET_PRICES = {
     "NMAX": 0.63,
 }
 
-# ~50 S&P 500 tickers across sectors
+# ~60 tickers across sectors + Polymarket active
 TICKERS = [
     # Polymarket observed
     "GME", "CTAS", "PAYX", "PDD", "CHWY", "DBI", "NMAX",
@@ -45,3 +49,37 @@ MARKET_AVG_BEAT_RATE = 0.75  # S&P 500 average beat rate for market_average mode
 # Cache settings
 CACHE_DIR = "data/cache"
 CACHE_TTL_HOURS = 24
+
+# Output settings
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "output")
+
+
+def validate_config():
+    """Validate configuration at startup. Log warnings for issues."""
+    issues = []
+
+    if not os.environ.get("DOME_API_KEY"):
+        issues.append("DOME_API_KEY not set — will use Gamma API fallback (slower, no CLOB prices)")
+
+    if not 0.0 < EDGE_THRESHOLD < 1.0:
+        issues.append(f"EDGE_THRESHOLD={EDGE_THRESHOLD} is outside (0, 1) range")
+
+    if not 1 <= MIN_HISTORY_QUARTERS <= 30:
+        issues.append(f"MIN_HISTORY_QUARTERS={MIN_HISTORY_QUARTERS} is outside [1, 30] range")
+
+    if BET_SIZE <= 0:
+        issues.append(f"BET_SIZE={BET_SIZE} must be positive")
+
+    if not 0.0 < MARKET_AVG_BEAT_RATE < 1.0:
+        issues.append(f"MARKET_AVG_BEAT_RATE={MARKET_AVG_BEAT_RATE} is outside (0, 1) range")
+
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    if issues:
+        for issue in issues:
+            logger.warning(f"[CONFIG] {issue}")
+    else:
+        logger.info(f"[CONFIG] OK — {len(TICKERS)} tickers, edge={EDGE_THRESHOLD}, min_q={MIN_HISTORY_QUARTERS}")
+
+    return len(issues) == 0
