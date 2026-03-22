@@ -3,18 +3,26 @@
 import pandas as pd
 
 
-def calculate_rolling_beat_rate(earnings_df: pd.DataFrame, min_periods: int = 4) -> pd.Series:
+def calculate_rolling_beat_rate(earnings_df: pd.DataFrame, min_periods: int = 4, recency_weight: float = 2.0) -> pd.Series:
     """Calculate rolling beat rate at each quarter using only prior data.
 
-    At index i, beat_rate = count(beat=True in 0..i-1) / i
+    Uses exponential recency weighting: more recent quarters count more.
+    recency_weight > 1.0 means recent quarters are weighted more heavily.
     Returns NaN for the first min_periods entries.
     """
     n = len(earnings_df)
     rates = pd.Series([float("nan")] * n, index=earnings_df.index)
 
     for i in range(min_periods, n):
-        past = earnings_df["beat"].iloc[:i]
-        rates.iloc[i] = past.sum() / len(past)
+        past_beats = earnings_df["beat"].iloc[:i].values
+        num = len(past_beats)
+        if recency_weight > 1.0:
+            # Exponential weights: most recent gets highest weight
+            weights = [recency_weight ** (j / max(num - 1, 1)) for j in range(num)]
+            total_w = sum(weights)
+            rates.iloc[i] = sum(b * w for b, w in zip(past_beats, weights)) / total_w
+        else:
+            rates.iloc[i] = past_beats.sum() / num
 
     return rates
 
