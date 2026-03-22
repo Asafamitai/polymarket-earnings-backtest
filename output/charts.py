@@ -1,7 +1,6 @@
 """Visualization charts for backtest results."""
 
 import matplotlib.pyplot as plt
-import pandas as pd
 
 
 def plot_results(results: dict, output_dir: str = "output"):

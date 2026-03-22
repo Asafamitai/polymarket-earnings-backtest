@@ -1,11 +1,9 @@
 """Production-ready HTTP server for the backtest UI."""
 import http.server
-import json
 import logging
 import os
 import signal
 import sys
-from functools import partial
 
 logging.basicConfig(
     level=logging.INFO,

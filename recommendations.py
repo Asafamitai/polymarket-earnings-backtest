@@ -1,13 +1,23 @@
 """Generate trading recommendations with real order book execution prices."""
 import json
 import math
+import os
 import warnings
 warnings.filterwarnings("ignore")
 
 import config
 from data.earnings import fetch_earnings_history
 from data.polymarket import fetch_active_earnings, get_execution_prices
-from backtest.beat_rate import calculate_rolling_beat_rate, overall_beat_rate
+from backtest.beat_rate import calculate_rolling_beat_rate
+
+# Confidence calculation constants
+SAMPLE_SIZE_CONFIDENCE = 20  # quarters needed for full sample confidence
+CONFIDENCE_WEIGHTS = {
+    'sample': 0.25,
+    'consistency': 0.20,
+    'streak': 0.20,
+    'track_record': 0.35,
+}
 
 
 def kelly_fraction(p, odds):
@@ -20,11 +30,11 @@ def kelly_fraction(p, odds):
 
 def generate_recommendations(bet_size=100):
     # Load calendar data
-    with open("output/calendar_data.json") as f:
+    with open(os.path.join(config.OUTPUT_DIR, "calendar_data.json")) as f:
         calendar = json.load(f)
 
     # Load backtest data for historical performance
-    with open("output/ui_data.json") as f:
+    with open(os.path.join(config.OUTPUT_DIR, "ui_data.json")) as f:
         backtest = json.load(f)
 
     # Fetch live order book execution prices
@@ -55,7 +65,7 @@ def generate_recommendations(bet_size=100):
         beats = int(earnings["beat"].sum())
 
         # --- Confidence factors ---
-        sample_conf = min(1.0, total_quarters / 20)
+        sample_conf = min(1.0, total_quarters / SAMPLE_SIZE_CONFIDENCE)
         recent_8 = earnings.tail(8)
         recent_beat_rate = recent_8["beat"].mean() if len(recent_8) >= 4 else current_beat_rate
         consistency = 1.0 - abs(recent_beat_rate - current_beat_rate)
@@ -67,10 +77,10 @@ def generate_recommendations(bet_size=100):
         track_record = bt_win_rate if bt_trades >= 3 else 0.5
 
         raw_confidence = (
-            sample_conf * 0.25 +
-            consistency * 0.20 +
-            streak_bonus * 0.20 +
-            track_record * 0.35
+            sample_conf * CONFIDENCE_WEIGHTS['sample'] +
+            consistency * CONFIDENCE_WEIGHTS['consistency'] +
+            streak_bonus * CONFIDENCE_WEIGHTS['streak'] +
+            track_record * CONFIDENCE_WEIGHTS['track_record']
         )
         confidence = round(raw_confidence * 100)
 
@@ -208,7 +218,7 @@ def generate_recommendations(bet_size=100):
     recs.sort(key=lambda r: r["confidence_ratio"], reverse=True)
 
     # Save to JSON
-    with open("output/recommendations.json", "w") as f:
+    with open(os.path.join(config.OUTPUT_DIR, "recommendations.json"), "w") as f:
         json.dump(recs, f, indent=2)
 
     # Print table

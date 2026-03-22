@@ -388,7 +388,7 @@ def get_execution_prices(markets: List[dict], bet_size: float = 100) -> Dict[str
         try:
             yes_book = fetch_order_book(yes_token)
             no_book = fetch_order_book(no_token)
-            time.sleep(0.2)
+            time.sleep(CLOB_RATE_LIMIT)
 
             yes_exec = calc_execution_price(yes_book, "buy", bet_size)
             no_exec = calc_execution_price(no_book, "buy", bet_size)
@@ -416,7 +416,6 @@ def get_active_prices() -> Dict[str, float]:
 
 def cache_all():
     """Fetch and cache all earnings data (active + closed)."""
-    import os
     os.makedirs(config.CACHE_DIR, exist_ok=True)
 
     logger.info("Fetching active earnings markets (Dome + CLOB)...")

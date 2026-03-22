@@ -8,6 +8,11 @@ from backtest.beat_rate import calculate_rolling_beat_rate
 from backtest.strategy import decide_position
 
 
+def safe_divide(numerator: float, denominator: float, default: float = 0.0) -> float:
+    """Safely divide two numbers, returning default if denominator is zero."""
+    return numerator / denominator if denominator != 0 else default
+
+
 def _get_price(ticker: str, rolling_beat_rate: float, price_model: str) -> float:
     """Get the Polymarket Yes price based on the price model."""
     if price_model == "market_average":
@@ -60,15 +65,15 @@ def run_backtest(tickers: list = None, price_model: str = "company_specific") ->
 
             actual_beat = earnings["beat"].iloc[i]
 
-            # Calculate P&L
+            # Calculate P&L (safe_divide guards against zero-cost positions)
             if position["side"] == "YES":
                 if actual_beat:
-                    pnl = config.BET_SIZE * (1.0 / position["cost"] - 1.0)
+                    pnl = config.BET_SIZE * (safe_divide(1.0, position["cost"]) - 1.0)
                 else:
                     pnl = -config.BET_SIZE
             else:  # NO
                 if not actual_beat:
-                    pnl = config.BET_SIZE * (1.0 / position["cost"] - 1.0)
+                    pnl = config.BET_SIZE * (safe_divide(1.0, position["cost"]) - 1.0)
                 else:
                     pnl = -config.BET_SIZE
 
@@ -113,7 +118,7 @@ def summarize_results(results_df: pd.DataFrame) -> dict:
             "trades": t,
             "wins": w,
             "losses": t - w,
-            "win_rate": w / t if t > 0 else 0,
+            "win_rate": safe_divide(w, t),
             "total_pnl": round(group["pnl"].sum(), 2),
             "avg_edge": round(group["edge"].mean(), 4),
             "beat_rate": round(group["beat_rate"].mean(), 4),
@@ -123,9 +128,9 @@ def summarize_results(results_df: pd.DataFrame) -> dict:
         "total_trades": total,
         "wins": int(wins),
         "losses": int(losses),
-        "win_rate": round(wins / total, 4) if total > 0 else 0,
+        "win_rate": round(safe_divide(wins, total), 4),
         "total_pnl": round(results_df["pnl"].sum(), 2),
-        "roi": round(results_df["pnl"].sum() / total_invested, 4) if total_invested > 0 else 0,
+        "roi": round(safe_divide(results_df["pnl"].sum(), total_invested), 4),
         "avg_pnl_per_trade": round(results_df["pnl"].mean(), 2),
         "max_drawdown": round(_max_drawdown(results_df["cumulative_pnl"]), 2),
         "by_company": by_company,

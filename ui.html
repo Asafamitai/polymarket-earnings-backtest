@@ -257,6 +257,7 @@ function renderTimeline() {
   const months = [];
   let d = new Date(minD.getFullYear(), minD.getMonth(), 1);
   while (d <= maxD) {
+    // substring(0,7) extracts YYYY-MM from ISO date string for monthly grouping
     months.push({ key: d.toISOString().substring(0,7), beats: 0, misses: 0 });
     d.setMonth(d.getMonth() + 1);
   }
@@ -455,6 +456,7 @@ function render() {
     const winRate = c._win_rate;
     const beatPct = Math.round(c._beat_rate * 100);
     const polyPrice = c.polymarket_price;
+    // Beat rate color thresholds: >=75% green (strong), >=50% gray (neutral), <50% red (weak)
     const dotClass = beatPct >= 75 ? 'green' : beatPct >= 50 ? 'gray' : 'red';
 
     return `

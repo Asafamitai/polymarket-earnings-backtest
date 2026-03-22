@@ -1,6 +1,7 @@
 """Generate JSON data for the web UI."""
 
 import json
+import os
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -71,9 +72,10 @@ def generate():
             companies[ticker][f"{model}_win_rate"] = round(w / len(trades), 4) if trades else 0
             companies[ticker][f"{model}_num_trades"] = len(trades)
 
-    with open("output/ui_data.json", "w") as f:
+    output_path = os.path.join(config.OUTPUT_DIR, "ui_data.json")
+    with open(output_path, "w") as f:
         json.dump(companies, f, indent=2)
-    print(f"\nSaved data for {len(companies)} companies to output/ui_data.json")
+    print(f"\nSaved data for {len(companies)} companies to {output_path}")
 
 
 if __name__ == "__main__":

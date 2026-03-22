@@ -1,5 +1,6 @@
 """Generate upcoming earnings calendar data with live Polymarket prices."""
 import json
+import os
 import warnings
 import datetime
 warnings.filterwarnings("ignore")
@@ -99,9 +100,10 @@ def generate():
     data = get_upcoming_earnings(all_tickers, weeks_ahead=4)
     print(f"\nFound {len(data)} upcoming earnings")
 
-    with open("output/calendar_data.json", "w") as f:
+    output_path = os.path.join(config.OUTPUT_DIR, "calendar_data.json")
+    with open(output_path, "w") as f:
         json.dump(data, f, indent=2)
-    print("Saved to output/calendar_data.json")
+    print(f"Saved to {output_path}")
 
 
 if __name__ == "__main__":

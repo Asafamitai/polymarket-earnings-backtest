@@ -8,7 +8,7 @@ print("=" * 60)
 
 # 1. Cache Polymarket data
 print("\n[1/4] Fetching Polymarket data...")
-from data.polymarket import cache_all, load_cached
+from data.polymarket import cache_all
 poly_data = cache_all()
 
 # Update config with live prices
