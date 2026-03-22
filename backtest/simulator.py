@@ -9,8 +9,11 @@ from backtest.strategy import decide_position
 
 
 def safe_divide(numerator: float, denominator: float, default: float = 0.0) -> float:
-    """Safely divide two numbers, returning default if denominator is zero."""
-    return numerator / denominator if denominator != 0 else default
+    """Safely divide two numbers, returning default if denominator is zero/None."""
+    try:
+        return numerator / denominator if denominator else default
+    except (TypeError, ZeroDivisionError, ValueError):
+        return default
 
 
 def _get_price(ticker: str, rolling_beat_rate: float, price_model: str) -> float:
