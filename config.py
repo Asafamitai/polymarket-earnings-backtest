@@ -31,6 +31,8 @@ TICKERS = [
     "GM", "F",
     # Utilities
     "NEE", "SO",
+    # Polymarket active (additional)
+    "PLAY", "BYND", "SPCE", "BIRD", "RH", "FDS", "MKC", "CAG", "LW", "MSM",
 ]
 
 # Backtest parameters
