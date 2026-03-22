@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+data/cache/
+.claude/
+output/*.json
+autoresearch-results.tsv
+IMPLEMENTATION_PLAN.md
+*.log
+.DS_Store
