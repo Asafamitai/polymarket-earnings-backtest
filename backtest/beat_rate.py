@@ -3,7 +3,7 @@
 import pandas as pd
 
 
-def calculate_rolling_beat_rate(earnings_df: pd.DataFrame, min_periods: int = 4, recency_weight: float = 3.0) -> pd.Series:
+def calculate_rolling_beat_rate(earnings_df: pd.DataFrame, min_periods: int = 4, recency_weight: float = 4.0) -> pd.Series:
     """Calculate rolling beat rate at each quarter using only prior data.
 
     Uses exponential recency weighting: more recent quarters count more.
