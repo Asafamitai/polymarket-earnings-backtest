@@ -1,0 +1,146 @@
+[
+  {
+    "date":"2020-03-26 07:00:00-04:00",
+    "eps_estimate":2.49,
+    "eps_actual":2.55,
+    "beat":true
+  },
+  {
+    "date":"2020-06-25 07:00:00-04:00",
+    "eps_estimate":2.44,
+    "eps_actual":2.86,
+    "beat":true
+  },
+  {
+    "date":"2020-09-24 07:00:00-04:00",
+    "eps_estimate":2.53,
+    "eps_actual":2.88,
+    "beat":true
+  },
+  {
+    "date":"2020-12-21 06:00:00-05:00",
+    "eps_estimate":2.74,
+    "eps_actual":2.88,
+    "beat":true
+  },
+  {
+    "date":"2021-03-30 06:00:00-04:00",
+    "eps_estimate":2.73,
+    "eps_actual":2.72,
+    "beat":false
+  },
+  {
+    "date":"2021-06-29 07:00:00-04:00",
+    "eps_estimate":2.75,
+    "eps_actual":2.72,
+    "beat":false
+  },
+  {
+    "date":"2021-09-28 07:00:00-04:00",
+    "eps_estimate":2.73,
+    "eps_actual":2.88,
+    "beat":true
+  },
+  {
+    "date":"2021-12-21 07:00:00-05:00",
+    "eps_estimate":3.0,
+    "eps_actual":3.25,
+    "beat":true
+  },
+  {
+    "date":"2022-03-24 07:00:00-04:00",
+    "eps_estimate":2.97,
+    "eps_actual":3.27,
+    "beat":true
+  },
+  {
+    "date":"2022-06-23 07:00:00-04:00",
+    "eps_estimate":3.22,
+    "eps_actual":3.76,
+    "beat":true
+  },
+  {
+    "date":"2022-09-22 07:00:00-04:00",
+    "eps_estimate":3.21,
+    "eps_actual":3.13,
+    "beat":false
+  },
+  {
+    "date":"2022-12-20 06:00:00-05:00",
+    "eps_estimate":3.63,
+    "eps_actual":3.99,
+    "beat":true
+  },
+  {
+    "date":"2023-03-23 07:00:00-04:00",
+    "eps_estimate":3.67,
+    "eps_actual":3.8,
+    "beat":true
+  },
+  {
+    "date":"2023-06-22 07:00:00-04:00",
+    "eps_estimate":3.6,
+    "eps_actual":3.79,
+    "beat":true
+  },
+  {
+    "date":"2023-09-21 07:00:00-04:00",
+    "eps_estimate":3.49,
+    "eps_actual":2.93,
+    "beat":false
+  },
+  {
+    "date":"2023-12-19 07:00:00-05:00",
+    "eps_estimate":4.11,
+    "eps_actual":4.12,
+    "beat":true
+  },
+  {
+    "date":"2024-03-21 07:00:00-04:00",
+    "eps_estimate":3.88,
+    "eps_actual":4.22,
+    "beat":true
+  },
+  {
+    "date":"2024-06-21 07:00:00-04:00",
+    "eps_estimate":3.9,
+    "eps_actual":4.37,
+    "beat":true
+  },
+  {
+    "date":"2024-09-19 07:00:00-04:00",
+    "eps_estimate":3.62,
+    "eps_actual":3.74,
+    "beat":true
+  },
+  {
+    "date":"2024-12-19 06:00:00-05:00",
+    "eps_estimate":4.28,
+    "eps_actual":4.37,
+    "beat":true
+  },
+  {
+    "date":"2025-03-20 06:00:00-04:00",
+    "eps_estimate":4.18,
+    "eps_actual":4.28,
+    "beat":true
+  },
+  {
+    "date":"2025-06-23 07:00:00-04:00",
+    "eps_estimate":4.3,
+    "eps_actual":4.27,
+    "beat":false
+  },
+  {
+    "date":"2025-09-18 06:00:00-04:00",
+    "eps_estimate":3.69,
+    "eps_actual":4.03,
+    "beat":true
+  },
+  {
+    "date":"2025-12-18 07:00:00-05:00",
+    "eps_estimate":4.36,
+    "eps_actual":4.51,
+    "beat":true
+  }
+]

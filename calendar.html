@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="he" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Calendar</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f7; color: #1a1a2e; }
+
+  .header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .header h1 { font-size: 20px; font-weight: 700; }
+  .header-nav { display: flex; gap: 12px; align-items: center; }
+  .header-nav a { font-size: 13px; color: #666; text-decoration: none; padding: 6px 12px; border-radius: 6px; }
+  .header-nav a:hover { background: #f0f0f0; }
+  .header-nav a.active { background: #1a1a2e; color: #fff; }
+
+  /* Recommendations panel */
+  .recs-panel { margin: 0 24px 24px; background: #fff; border-radius: 16px; border: 1px solid #e5e5e5; overflow: hidden; }
+  .recs-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+  .recs-header h3 { font-size: 16px; font-weight: 700; }
+  .recs-toggle { display: flex; background: #f0f0f0; border-radius: 8px; overflow: hidden; }
+  .recs-toggle button { padding: 5px 12px; border: none; background: transparent; font-size: 12px; cursor: pointer; font-weight: 500; color: #666; }
+  .recs-toggle button.active { background: #1a1a2e; color: #fff; border-radius: 6px; }
+  .recs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .recs-table th { text-align: left; padding: 8px 12px; border-bottom: 2px solid #eee; color: #888; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  .recs-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+  .recs-table tr:hover { background: #f9f9fb; }
+  .recs-table tr { cursor: pointer; }
+  .side-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .side-badge.yes { background: #dcfce7; color: #16a34a; }
+  .side-badge.no { background: #fee2e2; color: #dc2626; }
+  .stars { color: #f59e0b; letter-spacing: 1px; }
+  .conf-bar { display: inline-block; height: 6px; border-radius: 3px; background: #e5e5e5; width: 50px; vertical-align: middle; margin-left: 4px; position: relative; overflow: hidden; }
+  .conf-bar-fill { height: 100%; border-radius: 3px; }
+  .ev-cell { font-weight: 700; }
+  .ev-cell.pos { color: #16a34a; }
+  .ratio-bar { display: flex; align-items: center; gap: 6px; }
+  .ratio-visual { width: 60px; height: 20px; background: #f0f0f0; border-radius: 4px; overflow: hidden; position: relative; }
+  .ratio-conf { height: 100%; background: #3b82f6; opacity: 0.3; position: absolute; left: 0; top: 0; }
+  .ratio-ev { height: 100%; background: #16a34a; position: absolute; left: 0; top: 0; }
+
+  .month-title { text-align: center; padding: 24px 0 4px; }
+  .month-title .month { font-size: 14px; color: #888; }
+  .month-title h2 { font-size: 24px; font-weight: 700; }
+
+  .week-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0 16px; }
+  .week-nav button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd; background: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .week-nav button:hover { background: #f0f0f0; }
+  .week-nav .week-label { font-size: 13px; color: #888; }
+
+  .calendar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 0 24px 24px; background: #fff; border-radius: 16px; border: 1px solid #e5e5e5; overflow: hidden; min-height: 500px; }
+
+  .day-col { border-right: 1px solid #eee; display: flex; flex-direction: column; }
+  .day-col:last-child { border-right: none; }
+
+  .day-header { padding: 12px 16px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; }
+  .day-header .dow { font-size: 13px; color: #888; font-weight: 500; }
+  .day-header .dom { font-size: 18px; font-weight: 700; margin-top: 2px; }
+  .day-header.today .dom { background: #1a1a2e; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+
+  .day-body { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+
+  .no-earnings { text-align: center; padding: 40px 8px; color: #bbb; font-size: 13px; }
+  .no-earnings .icon { font-size: 24px; margin-bottom: 4px; opacity: 0.5; }
+
+  .timing-label { font-size: 10px; color: #999; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 0 0; border-top: 1px dashed #eee; margin-top: 4px; }
+  .timing-label:first-child { border-top: none; margin-top: 0; }
+
+  .earning-card { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: all 0.15s; }
+  .earning-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); transform: translateY(-1px); border-color: #ccc; }
+  .earning-card .top-row { display: flex; align-items: center; justify-content: space-between; }
+  .earning-card .ticker-info { display: flex; align-items: center; gap: 8px; }
+  .earning-card .ticker-icon { width: 32px; height: 32px; border-radius: 50%; background: #1a1a2e; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; flex-shrink: 0; }
+  .earning-card .ticker-name { font-weight: 700; font-size: 14px; }
+  .earning-card .eps { font-size: 11px; color: #888; }
+  .earning-card .beat-info { text-align: right; }
+  .earning-card .beat-pct { font-size: 16px; font-weight: 700; }
+  .earning-card .beat-label { font-size: 10px; color: #888; }
+  .beat-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; }
+  .beat-dot.green { background: #16a34a; }
+  .beat-dot.yellow { background: #f59e0b; }
+  .beat-dot.red { background: #dc2626; }
+
+  .earning-card .bottom-row { display: flex; gap: 8px; margin-top: 6px; }
+  .earning-card .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #f0f0f0; color: #666; }
+  .earning-card .tag.edge-pos { background: #dcfce7; color: #16a34a; font-weight: 600; }
+  .earning-card .tag.edge-neg { background: #fee2e2; color: #dc2626; }
+  .earning-card .tag.poly { background: #dbeafe; color: #2563eb; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: flex-start; padding: 60px 20px; overflow-y: auto; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 16px; max-width: 520px; width: 100%; overflow: hidden; }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+  .modal-header h2 { font-size: 22px; font-weight: 700; }
+  .modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: #f0f0f0; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { background: #ddd; }
+  .modal-body { padding: 20px 24px; }
+  .modal-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .modal-stat { text-align: center; padding: 14px; background: #f9f9fb; border-radius: 10px; }
+  .modal-stat .val { font-size: 22px; font-weight: 700; }
+  .modal-stat .lbl { font-size: 11px; color: #888; margin-top: 2px; }
+  .modal-detail { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+  .modal-detail .key { color: #888; }
+  .modal-detail .value { font-weight: 600; }
+  .signal-box { margin-top: 16px; padding: 14px; border-radius: 10px; text-align: center; }
+  .signal-box.buy-yes { background: #dcfce7; border: 1px solid #bbf7d0; }
+  .signal-box.buy-no { background: #fee2e2; border: 1px solid #fecaca; }
+  .signal-box.no-edge { background: #f9f9fb; border: 1px solid #eee; }
+  .signal-box .signal-title { font-size: 14px; font-weight: 700; }
+  .signal-box .signal-detail { font-size: 12px; color: #666; margin-top: 4px; }
+
+  @media (max-width: 700px) {
+    .calendar { grid-template-columns: 1fr; }
+    .day-col { border-right: none; border-bottom: 1px solid #eee; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Earnings Calendar</h1>
+  <div class="header-nav">
+    <a href="ui.html">Backtest</a>
+    <a href="calendar.html" class="active">Calendar</a>
+  </div>
+</div>
+
+<div class="month-title">
+  <div class="month" id="month-label"></div>
+  <h2>Earnings Calendar</h2>
+</div>
+
+<div class="week-nav">
+  <button onclick="changeWeek(-1)">&#8249;</button>
+  <span class="week-label" id="week-label"></span>
+  <button onclick="changeWeek(1)">&#8250;</button>
+</div>
+
+<div class="calendar" id="calendar"></div>
+
+<div class="recs-panel" id="recs-panel" style="display:none">
+  <div class="recs-header">
+    <h3>Recommendations</h3>
+    <div class="recs-toggle">
+      <button class="active" onclick="setRecSort('rating')">Best Rating</button>
+      <button onclick="setRecSort('ev')">Highest EV</button>
+      <button onclick="setRecSort('confidence')">Most Confident</button>
+      <button onclick="setRecSort('risk')">Best Risk/Reward</button>
+    </div>
+  </div>
+  <table class="recs-table">
+    <thead><tr>
+      <th>Rating</th>
+      <th>Ticker</th>
+      <th>Date</th>
+      <th>Side</th>
+      <th>Beat Rate</th>
+      <th>Price</th>
+      <th>Edge</th>
+      <th>EV / $100</th>
+      <th>Confidence</th>
+      <th>Conf / EV Ratio</th>
+      <th>Kelly</th>
+    </tr></thead>
+    <tbody id="recs-body"></tbody>
+  </table>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+let DATA = [];
+let RECS = [];
+let weekOffset = 0;
+let recSort = 'rating';
+
+async function loadData() {
+  const resp = await fetch('output/calendar_data.json');
+  DATA = await resp.json();
+  // Also load backtest data for extended info
+  try {
+    const resp2 = await fetch('output/ui_data.json');
+    window.BACKTEST = await resp2.json();
+  } catch(e) { window.BACKTEST = {}; }
+  try {
+    const resp3 = await fetch('output/recommendations.json');
+    RECS = await resp3.json();
+  } catch(e) { RECS = []; }
+  render();
+  renderRecs();
+}
+
+function getWeekDays(offset) {
+  const today = new Date();
+  // getDay(): 0=Sun, 1=Mon...6=Sat
+  // We want to show the upcoming week if today is a weekend
+  let dow = today.getDay(); // 0=Sun
+  if (dow === 0) dow = 7;   // treat Sunday as 7 so Monday calc works
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dow + 1 + offset * 7);
+  // If today is Sat/Sun and offset=0, show NEXT week instead of current
+  const todayDay = today.getDay();
+  if (offset === 0 && (todayDay === 0 || todayDay === 6)) {
+    monday.setDate(monday.getDate() + 7);
+  }
+  const days = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+function fmt(d) {
+  // Use local date to avoid UTC timezone shift
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function fmtShort(d) { return d.toLocaleDateString('en', { month: 'short', day: 'numeric' }); }
+
+const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+function changeWeek(dir) {
+  weekOffset += dir;
+  render();
+}
+
+function render() {
+  const days = getWeekDays(weekOffset);
+  const today = fmt(new Date());
+
+  // Month label
+  const months = [...new Set(days.map(d => d.toLocaleDateString('en', { month: 'long', year: 'numeric' })))];
+  document.getElementById('month-label').textContent = months.join(' - ');
+  document.getElementById('week-label').textContent = `${fmtShort(days[0])} – ${fmtShort(days[4])}`;
+
+  const cal = document.getElementById('calendar');
+  cal.innerHTML = days.map((day, i) => {
+    const dateStr = fmt(day);
+    const isToday = dateStr === today;
+    const items = DATA.filter(e => e.date === dateStr);
+
+    let body = '';
+    if (items.length === 0) {
+      body = `<div class="no-earnings"><div class="icon">&#x24;</div>No earnings</div>`;
+    } else {
+      body = items.map(e => {
+        // Show Polymarket price as main "beats" % (like Polymarket does)
+        // Fall back to historical beat rate if no Polymarket market
+        const displayPct = e.polymarket_price != null ? e.polymarket_price : e.beat_rate;
+        const dotClass = displayPct >= 75 ? 'green' : displayPct >= 50 ? 'yellow' : 'red';
+        const epsStr = e.eps_estimate != null ? `$${e.eps_estimate.toFixed(2)} EPS` : 'EPS N/A';
+
+        let tags = '';
+        if (e.has_polymarket && e.beat_rate != null && e.polymarket_price != null) {
+          // Show edge: our historical beat rate vs market price
+          const edge = e.beat_rate - e.polymarket_price;
+          if (Math.abs(edge) >= 5) {
+            const edgeClass = edge > 0 ? 'edge-pos' : 'edge-neg';
+            tags += `<span class="tag ${edgeClass}">${edge > 0 ? '+' : ''}${edge}% edge</span>`;
+          }
+          tags += `<span class="tag" style="font-size:9px">hist: ${e.beat_rate}%</span>`;
+        }
+
+        return `
+          <div class="earning-card" onclick="openModal('${e.ticker}')">
+            <div class="top-row">
+              <div class="ticker-info">
+                <div class="ticker-icon">${e.ticker.substring(0,3)}</div>
+                <div>
+                  <div class="ticker-name">${e.ticker}</div>
+                  <div class="eps">${epsStr}</div>
+                </div>
+              </div>
+              <div class="beat-info">
+                <div class="beat-pct"><span class="beat-dot ${dotClass}"></span>${displayPct != null ? displayPct + '%' : '?'}</div>
+                <div class="beat-label">beats</div>
+              </div>
+            </div>
+            ${tags ? `<div class="bottom-row">${tags}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    return `
+      <div class="day-col">
+        <div class="day-header ${isToday ? 'today' : ''}">
+          <div class="dow">${DOW[i]}</div>
+          <div class="dom">${day.getDate()}</div>
+        </div>
+        <div class="day-body">${body}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openModal(ticker) {
+  const e = DATA.find(d => d.ticker === ticker);
+  if (!e) return;
+  const bt = window.BACKTEST?.[ticker];
+
+  // Check if we have a recommendation for this ticker
+  const rec = RECS.find(r => r.ticker === ticker);
+
+  let signal = '';
+  if (rec) {
+    const isYes = rec.side === 'YES';
+    const boxClass = isYes ? 'buy-yes' : 'buy-no';
+    const cr = rec.confidence_ratio;
+    const numStars = cr > 5 ? 5 : cr > 3 ? 4 : cr > 1.5 ? 3 : cr > 0.5 ? 2 : 1;
+    const starsStr = '\u2605'.repeat(numStars) + '\u2606'.repeat(5 - numStars);
+
+    signal = `
+      <div class="signal-box ${boxClass}">
+        <div class="signal-title" style="font-size:16px">
+          <span style="color:#f59e0b">${starsStr}</span>
+          Buy ${rec.side} @ ${Math.round(rec.cost * 100)}c
+        </div>
+        <div class="signal-detail" style="margin-top:8px;font-size:13px;line-height:1.8">
+          <div><strong>Edge:</strong> +${(rec.edge * 100).toFixed(1)}% | <strong>Win Prob:</strong> ${(rec.win_prob * 100).toFixed(1)}%</div>
+          <div><strong>Win:</strong> +$${rec.payout_if_win.toFixed(0)} | <strong>Lose:</strong> -$${rec.loss_if_lose.toFixed(0)}</div>
+          <div><strong>EV per $100:</strong> $${rec.ev_per_bet.toFixed(1)}</div>
+          <div><strong>Confidence:</strong> ${rec.confidence}% | <strong>EV/Risk:</strong> ${rec.ev_to_risk.toFixed(2)}</div>
+          <div><strong>Confidence/EV Ratio:</strong> ${rec.confidence_ratio.toFixed(2)} (${cr > 3 ? 'Strong' : cr > 1 ? 'Moderate' : 'Weak'})</div>
+          <div><strong>Kelly:</strong> ${(rec.kelly_fraction * 100).toFixed(1)}% of bankroll</div>
+          <div style="margin-top:4px;font-size:11px;color:#888">Backtest: ${rec.bt_trades} trades, ${rec.bt_win_rate != null ? rec.bt_win_rate + '% win rate' : 'N/A'}, P&L $${rec.bt_pnl}</div>
+        </div>
+      </div>`;
+  } else if (e.polymarket_price != null && e.beat_rate != null) {
+    signal = `<div class="signal-box no-edge">
+      <div class="signal-title">No Edge</div>
+      <div class="signal-detail">Market price is close to historical beat rate</div>
+    </div>`;
+  }
+
+  let backtestInfo = '';
+  if (bt) {
+    const pnl = bt.market_average_total_pnl || 0;
+    const wr = bt.market_average_win_rate || 0;
+    const trades = bt.market_average_num_trades || 0;
+    backtestInfo = `
+      <div class="modal-detail"><span class="key">Backtest P&L (Mkt Avg)</span><span class="value" style="color:${pnl >= 0 ? '#16a34a' : '#dc2626'}">$${pnl.toFixed(0)}</span></div>
+      <div class="modal-detail"><span class="key">Win Rate</span><span class="value">${trades > 0 ? Math.round(wr * 100) + '%' : '-'} (${trades} trades)</span></div>
+    `;
+  }
+
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-header">
+      <h2>${ticker}</h2>
+      <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('open')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-stats">
+        <div class="modal-stat">
+          <div class="val">${e.beat_rate != null ? e.beat_rate + '%' : '?'}</div>
+          <div class="lbl">Historical Beat Rate</div>
+        </div>
+        <div class="modal-stat">
+          <div class="val">${e.polymarket_price != null ? e.polymarket_price + '%' : 'N/A'}</div>
+          <div class="lbl">Polymarket Price</div>
+        </div>
+      </div>
+      <div class="modal-detail"><span class="key">Report Date</span><span class="value">${e.date}</span></div>
+      <div class="modal-detail"><span class="key">EPS Estimate</span><span class="value">${e.eps_estimate != null ? '$' + e.eps_estimate.toFixed(2) : 'N/A'}</span></div>
+      <div class="modal-detail"><span class="key">EPS Range</span><span class="value">${e.eps_low != null ? '$' + e.eps_low.toFixed(2) + ' – $' + e.eps_high.toFixed(2) : 'N/A'}</span></div>
+      <div class="modal-detail"><span class="key">Last Quarter EPS</span><span class="value">${e.last_eps != null ? '$' + e.last_eps.toFixed(2) : 'N/A'}</span></div>
+      ${backtestInfo}
+      ${signal}
+    </div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modal-overlay').classList.remove('open');
+  if (e.key === 'ArrowLeft') changeWeek(-1);
+  if (e.key === 'ArrowRight') changeWeek(1);
+});
+
+function setRecSort(sort) {
+  recSort = sort;
+  document.querySelectorAll('.recs-toggle button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderRecs();
+}
+
+function renderRecs() {
+  if (!RECS.length) return;
+  document.getElementById('recs-panel').style.display = '';
+
+  let sorted = [...RECS];
+  if (recSort === 'rating') sorted.sort((a, b) => b.confidence_ratio - a.confidence_ratio);
+  else if (recSort === 'ev') sorted.sort((a, b) => b.ev_per_bet - a.ev_per_bet);
+  else if (recSort === 'confidence') sorted.sort((a, b) => b.confidence - a.confidence);
+  else if (recSort === 'risk') sorted.sort((a, b) => b.ev_to_risk - a.ev_to_risk);
+
+  const maxEV = Math.max(1, ...sorted.map(r => Math.abs(r.ev_per_bet)));
+  const maxConf = 100;
+
+  document.getElementById('recs-body').innerHTML = sorted.map(r => {
+    // Stars
+    const cr = r.confidence_ratio;
+    const numStars = cr > 5 ? 5 : cr > 3 ? 4 : cr > 1.5 ? 3 : cr > 0.5 ? 2 : 1;
+    const stars = '<span class="stars">' + '\u2605'.repeat(numStars) + '<span style="color:#ddd">' + '\u2605'.repeat(5 - numStars) + '</span></span>';
+
+    // Confidence bar color
+    const confColor = r.confidence >= 90 ? '#16a34a' : r.confidence >= 75 ? '#3b82f6' : r.confidence >= 60 ? '#f59e0b' : '#dc2626';
+
+    // Ratio visual: show confidence vs EV proportionally
+    const evNorm = Math.min(100, (r.ev_per_bet / maxEV) * 100);
+    const confNorm = r.confidence;
+
+    return `<tr onclick="openModal('${r.ticker}')">
+      <td>${stars}</td>
+      <td><strong>${r.ticker}</strong></td>
+      <td>${r.date}</td>
+      <td><span class="side-badge ${r.side.toLowerCase()}">${r.side}</span></td>
+      <td>${r.beat_rate}%</td>
+      <td>${Math.round(r.price * 100)}%</td>
+      <td style="color:${r.edge > 0.1 ? '#16a34a' : '#666'};font-weight:600">+${(r.edge * 100).toFixed(1)}%</td>
+      <td class="ev-cell pos">$${r.ev_per_bet.toFixed(1)}</td>
+      <td>
+        ${r.confidence}%
+        <span class="conf-bar"><span class="conf-bar-fill" style="width:${r.confidence}%;background:${confColor}"></span></span>
+      </td>
+      <td>
+        <div class="ratio-bar">
+          <div class="ratio-visual">
+            <div class="ratio-conf" style="width:${confNorm}%"></div>
+            <div class="ratio-ev" style="width:${evNorm}%;opacity:0.6"></div>
+          </div>
+          <span style="font-size:11px;font-weight:600">${cr.toFixed(1)}</span>
+        </div>
+      </td>
+      <td>${(r.kelly_fraction * 100).toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+loadData();
+</script>
+</body>
+</html>

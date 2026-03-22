@@ -1,0 +1,140 @@
+[
+  {
+    "date":"2020-04-23 16:00:00-04:00",
+    "eps_estimate":1.26,
+    "eps_actual":1.45,
+    "beat":true
+  },
+  {
+    "date":"2020-07-23 16:00:00-04:00",
+    "eps_estimate":1.11,
+    "eps_actual":1.23,
+    "beat":true
+  },
+  {
+    "date":"2020-10-22 16:00:00-04:00",
+    "eps_estimate":1.11,
+    "eps_actual":1.11,
+    "beat":false
+  },
+  {
+    "date":"2021-01-21 16:00:00-05:00",
+    "eps_estimate":1.11,
+    "eps_actual":1.52,
+    "beat":true
+  },
+  {
+    "date":"2021-04-22 16:00:00-04:00",
+    "eps_estimate":1.14,
+    "eps_actual":1.39,
+    "beat":true
+  },
+  {
+    "date":"2021-07-22 16:00:00-04:00",
+    "eps_estimate":1.07,
+    "eps_actual":1.28,
+    "beat":true
+  },
+  {
+    "date":"2021-10-21 16:00:00-04:00",
+    "eps_estimate":1.11,
+    "eps_actual":1.71,
+    "beat":true
+  },
+  {
+    "date":"2022-01-26 16:00:00-05:00",
+    "eps_estimate":0.91,
+    "eps_actual":1.09,
+    "beat":true
+  },
+  {
+    "date":"2022-04-28 16:00:00-04:00",
+    "eps_estimate":0.8,
+    "eps_actual":0.87,
+    "beat":true
+  },
+  {
+    "date":"2022-07-28 16:00:00-04:00",
+    "eps_estimate":0.7,
+    "eps_actual":0.29,
+    "beat":false
+  },
+  {
+    "date":"2022-10-27 16:00:00-04:00",
+    "eps_estimate":0.33,
+    "eps_actual":0.59,
+    "beat":true
+  },
+  {
+    "date":"2023-01-26 16:00:00-05:00",
+    "eps_estimate":0.2,
+    "eps_actual":0.1,
+    "beat":false
+  },
+  {
+    "date":"2023-04-27 16:00:00-04:00",
+    "eps_estimate":-0.14,
+    "eps_actual":-0.04,
+    "beat":true
+  },
+  {
+    "date":"2023-07-27 16:00:00-04:00",
+    "eps_estimate":-0.03,
+    "eps_actual":0.13,
+    "beat":true
+  },
+  {
+    "date":"2023-10-26 16:00:00-04:00",
+    "eps_estimate":0.22,
+    "eps_actual":0.41,
+    "beat":true
+  },
+  {
+    "date":"2024-01-25 16:00:00-05:00",
+    "eps_estimate":0.45,
+    "eps_actual":0.54,
+    "beat":true
+  },
+  {
+    "date":"2024-04-25 16:00:00-04:00",
+    "eps_estimate":0.14,
+    "eps_actual":0.18,
+    "beat":true
+  },
+  {
+    "date":"2024-08-01 12:00:00-04:00",
+    "eps_estimate":0.1,
+    "eps_actual":0.02,
+    "beat":false
+  },
+  {
+    "date":"2024-10-31 16:00:00-04:00",
+    "eps_estimate":-0.03,
+    "eps_actual":-0.46,
+    "beat":false
+  },
+  {
+    "date":"2025-01-30 16:00:00-05:00",
+    "eps_estimate":0.12,
+    "eps_actual":0.13,
+    "beat":true
+  },
+  {
+    "date":"2025-07-24 16:00:00-04:00",
+    "eps_estimate":0.01,
+    "eps_actual":-0.1,
+    "beat":false
+  },
+  {
+    "date":"2025-10-23 16:00:00-04:00",
+    "eps_estimate":0.01,
+    "eps_actual":0.23,
+    "beat":true
+  },
+  {
+    "date":"2026-01-22 16:00:00-05:00",
+    "eps_estimate":0.08,
+    "eps_actual":0.15,
+    "beat":true
+  }
+]
