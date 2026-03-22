@@ -34,7 +34,7 @@ TICKERS = [
 ]
 
 # Backtest parameters
-MIN_HISTORY_QUARTERS = 8   # Minimum quarters of history before trading
+MIN_HISTORY_QUARTERS = 6   # Minimum quarters of history before trading
 BET_SIZE = 100             # Fixed bet size per trade ($)
 EDGE_THRESHOLD = 0.03      # Minimum edge to take a trade (3%)
 BEAT_INCLUDES_MEET = False  # True: actual >= estimate, False: actual > estimate
