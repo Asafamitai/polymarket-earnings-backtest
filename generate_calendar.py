@@ -58,11 +58,14 @@ def get_upcoming_earnings(tickers, weeks_ahead=4):
             poly_eps_type = None
             has_polymarket = False
 
+            poly_slug = None
+
             if poly:
                 has_polymarket = True
                 poly_price = poly["yes_price"]
                 poly_eps = poly.get("eps_threshold")
                 poly_eps_type = poly.get("eps_type", "unknown")
+                poly_slug = poly.get("slug")
 
             # EPS estimate: prefer Polymarket threshold, fallback to yfinance
             eps_est = poly_eps
@@ -83,6 +86,7 @@ def get_upcoming_earnings(tickers, weeks_ahead=4):
                 "last_eps": last_eps,
                 "beat_rate": beat_rate,
                 "polymarket_price": round(poly_price * 100) if poly_price else None,
+                "polymarket_url": f"https://polymarket.com/event/{poly_slug}" if poly_slug else None,
                 "reported": earn_date < today,
                 "has_polymarket": has_polymarket,
             })

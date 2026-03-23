@@ -211,6 +211,7 @@ def generate_recommendations(bet_size=100):
             "bt_win_rate": round(bt_win_rate * 100) if bt_trades > 0 else None,
             "bt_pnl": bt_pnl,
             "has_orderbook": has_orderbook,
+            "polymarket_url": item.get("polymarket_url"),
             **{k: v for k, v in best.items() if k != "fills"},  # exclude fills from JSON
         })
 
