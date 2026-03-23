@@ -1,149 +1,410 @@
 <!DOCTYPE html>
-<html lang="he" dir="ltr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Polymarket Earnings Calendar - Live prices and beat predictions">
-<meta name="theme-color" content="#1a1a2e">
+<meta name="theme-color" content="#0d0d0d">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
 <title>Earnings Calendar</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f7; color: #1a1a2e; }
+:root {
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-hover: #fafafb;
+  --border: #e8e8eb;
+  --border-light: #f0f0f3;
+  --text: #0d0d0d;
+  --text-secondary: #71717a;
+  --text-muted: #a1a1aa;
+  --accent: #0d0d0d;
+  --accent-light: #f4f4f5;
+  --green: #22c55e;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --red: #ef4444;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --blue: #3b82f6;
+  --blue-bg: #eff6ff;
+  --yellow: #f59e0b;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+  --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  .header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-  .header h1 { font-size: 20px; font-weight: 700; }
-  .header-nav { display: flex; gap: 12px; align-items: center; }
-  .header-nav a { font-size: 13px; color: #666; text-decoration: none; padding: 6px 12px; border-radius: 6px; }
-  .header-nav a:hover { background: #f0f0f0; }
-  .header-nav a.active { background: #1a1a2e; color: #fff; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
 
-  /* Recommendations panel */
-  .recs-panel { margin: 0 24px 24px; background: #fff; border-radius: 16px; border: 1px solid #e5e5e5; overflow: hidden; }
-  .recs-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
-  .recs-header h3 { font-size: 16px; font-weight: 700; }
-  .recs-toggle { display: flex; background: #f0f0f0; border-radius: 8px; overflow: hidden; }
-  .recs-toggle button { padding: 5px 12px; border: none; background: transparent; font-size: 12px; cursor: pointer; font-weight: 500; color: #666; }
-  .recs-toggle button.active { background: #1a1a2e; color: #fff; border-radius: 6px; }
-  .recs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .recs-table th { text-align: left; padding: 8px 12px; border-bottom: 2px solid #eee; color: #888; font-weight: 600; font-size: 11px; text-transform: uppercase; }
-  .recs-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
-  .recs-table tr:hover { background: #f9f9fb; }
-  .recs-table tr { cursor: pointer; }
-  .side-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
-  .side-badge.yes { background: #dcfce7; color: #16a34a; }
-  .side-badge.no { background: #fee2e2; color: #dc2626; }
-  .stars { color: #f59e0b; letter-spacing: 1px; }
-  .conf-bar { display: inline-block; height: 6px; border-radius: 3px; background: #e5e5e5; width: 50px; vertical-align: middle; margin-left: 4px; position: relative; overflow: hidden; }
-  .conf-bar-fill { height: 100%; border-radius: 3px; }
-  .ev-cell { font-weight: 700; }
-  .ev-cell.pos { color: #16a34a; }
-  .ratio-bar { display: flex; align-items: center; gap: 6px; }
-  .ratio-visual { width: 60px; height: 20px; background: #f0f0f0; border-radius: 4px; overflow: hidden; position: relative; }
-  .ratio-conf { height: 100%; background: #3b82f6; opacity: 0.3; position: absolute; left: 0; top: 0; }
-  .ratio-ev { height: 100%; background: #16a34a; position: absolute; left: 0; top: 0; }
+/* Header — Polymarket style: minimal, border-bottom only */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.nav { display: flex; gap: 4px; }
+.nav a {
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  text-decoration: none; padding: 6px 14px; border-radius: 20px;
+  transition: all var(--transition);
+}
+.nav a:hover { background: var(--accent-light); color: var(--text); }
+.nav a.active { background: var(--accent); color: #fff; }
 
-  .month-title { text-align: center; padding: 24px 0 4px; }
-  .month-title .month { font-size: 14px; color: #888; }
-  .month-title h2 { font-size: 24px; font-weight: 700; }
+/* Calendar title */
+.cal-title { text-align: center; padding: 28px 0 8px; }
+.cal-title .month { font-size: 13px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.02em; }
+.cal-title h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; }
 
-  .week-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0 16px; }
-  .week-nav button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd; background: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .week-nav button:hover { background: #f0f0f0; }
-  .week-nav .week-label { font-size: 13px; color: #888; }
+/* Week navigation — pill style */
+.week-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 4px 0 20px; }
+.week-nav button {
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--surface); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); color: var(--text-secondary);
+}
+.week-nav button:hover { background: var(--accent-light); border-color: var(--text-muted); }
+.week-nav button:active { transform: scale(0.95); }
+.week-label { font-size: 13px; color: var(--text-muted); font-weight: 500; min-width: 120px; text-align: center; }
 
-  .calendar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 0 24px 24px; background: #fff; border-radius: 16px; border: 1px solid #e5e5e5; overflow: hidden; min-height: 500px; }
+/* Calendar grid — Polymarket uses clean bordered containers */
+.calendar {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+  margin: 0 24px 24px; background: var(--surface);
+  border-radius: var(--radius); border: 1px solid var(--border);
+  overflow: hidden; min-height: 480px;
+  box-shadow: var(--shadow-sm);
+}
 
-  .day-col { border-right: 1px solid #eee; display: flex; flex-direction: column; }
-  .day-col:last-child { border-right: none; }
+.day-col { border-right: 1px solid var(--border-light); display: flex; flex-direction: column; }
+.day-col:last-child { border-right: none; }
 
-  .day-header { padding: 12px 16px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; }
-  .day-header .dow { font-size: 13px; color: #888; font-weight: 500; }
-  .day-header .dom { font-size: 18px; font-weight: 700; margin-top: 2px; }
-  .day-header.today .dom { background: #1a1a2e; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.day-header { padding: 14px 16px; text-align: center; border-bottom: 1px solid var(--border-light); }
+.day-header .dow { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.day-header .dom { font-size: 20px; font-weight: 700; margin-top: 4px; color: var(--text); }
+.day-header.today .dom {
+  background: var(--accent); color: #fff;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
 
-  .day-body { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.day-body { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 
-  .no-earnings { text-align: center; padding: 40px 8px; color: #bbb; font-size: 13px; }
-  .no-earnings .icon { font-size: 24px; margin-bottom: 4px; opacity: 0.5; }
+.no-earnings { text-align: center; padding: 48px 8px; color: var(--text-muted); font-size: 13px; }
+.no-earnings .icon { font-size: 20px; margin-bottom: 6px; opacity: 0.4; }
 
-  .timing-label { font-size: 10px; color: #999; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 0 0; border-top: 1px dashed #eee; margin-top: 4px; }
-  .timing-label:first-child { border-top: none; margin-top: 0; }
+/* Earning cards — Polymarket-inspired: clean, high contrast, no clutter */
+.earning-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px;
+  cursor: pointer; transition: all var(--transition);
+  position: relative;
+}
+.earning-card:hover {
+  box-shadow: var(--shadow-md); border-color: #d4d4d8;
+  transform: translateY(-1px);
+}
+.earning-card:active { transform: translateY(0); box-shadow: var(--shadow-sm); }
+.earning-card .top-row { display: flex; align-items: center; justify-content: space-between; }
+.earning-card .ticker-info { display: flex; align-items: center; gap: 10px; }
+.earning-card .ticker-icon {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 10px; flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+.earning-card .ticker-name { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+.earning-card .eps { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.earning-card .beat-info { text-align: right; }
+.earning-card .beat-pct { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+.earning-card .beat-label { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+.beat-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+.beat-dot.green { background: var(--green); }
+.beat-dot.yellow { background: var(--yellow); }
+.beat-dot.red { background: var(--red); }
 
-  .earning-card { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: all 0.15s; }
-  .earning-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); transform: translateY(-1px); border-color: #ccc; }
-  .earning-card .top-row { display: flex; align-items: center; justify-content: space-between; }
-  .earning-card .ticker-info { display: flex; align-items: center; gap: 8px; }
-  .earning-card .ticker-icon { width: 32px; height: 32px; border-radius: 50%; background: #1a1a2e; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; flex-shrink: 0; }
-  .earning-card .ticker-name { font-weight: 700; font-size: 14px; }
-  .earning-card .eps { font-size: 11px; color: #888; }
-  .earning-card .beat-info { text-align: right; }
-  .earning-card .beat-pct { font-size: 16px; font-weight: 700; }
-  .earning-card .beat-label { font-size: 10px; color: #888; }
-  .beat-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; }
-  .beat-dot.green { background: #16a34a; }
-  .beat-dot.yellow { background: #f59e0b; }
-  .beat-dot.red { background: #dc2626; }
+.earning-card .bottom-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.tag {
+  font-size: 10px; padding: 2px 8px; border-radius: 4px;
+  background: var(--accent-light); color: var(--text-secondary);
+  font-weight: 500;
+}
+.tag.edge-pos { background: var(--green-bg); color: #15803d; font-weight: 600; }
+.tag.edge-neg { background: var(--red-bg); color: var(--red); font-weight: 600; }
 
-  .earning-card .bottom-row { display: flex; gap: 8px; margin-top: 6px; }
-  .earning-card .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #f0f0f0; color: #666; }
-  .earning-card .tag.edge-pos { background: #dcfce7; color: #16a34a; font-weight: 600; }
-  .earning-card .tag.edge-neg { background: #fee2e2; color: #dc2626; }
-  .earning-card .tag.poly { background: #dbeafe; color: #2563eb; }
+/* Polymarket link */
+.poly-link {
+  text-decoration: none; font-size: 12px; opacity: 0;
+  transition: opacity var(--transition); margin-left: 4px;
+  vertical-align: middle;
+}
+.earning-card:hover .poly-link { opacity: 0.7; }
+.poly-link:hover { opacity: 1 !important; }
 
-  /* Modal */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: flex-start; padding: 60px 20px; overflow-y: auto; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: #fff; border-radius: 16px; max-width: 520px; width: 100%; overflow: hidden; }
-  .modal-header { padding: 20px 24px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
-  .modal-header h2 { font-size: 22px; font-weight: 700; }
-  .modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: #f0f0f0; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .modal-close:hover { background: #ddd; }
-  .modal-body { padding: 20px 24px; }
-  .modal-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
-  .modal-stat { text-align: center; padding: 14px; background: #f9f9fb; border-radius: 10px; }
-  .modal-stat .val { font-size: 22px; font-weight: 700; }
-  .modal-stat .lbl { font-size: 11px; color: #888; margin-top: 2px; }
-  .modal-detail { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-  .modal-detail .key { color: #888; }
-  .modal-detail .value { font-weight: 600; }
-  .signal-box { margin-top: 16px; padding: 14px; border-radius: 10px; text-align: center; }
-  .signal-box.buy-yes { background: #dcfce7; border: 1px solid #bbf7d0; }
-  .signal-box.buy-no { background: #fee2e2; border: 1px solid #fecaca; }
-  .signal-box.no-edge { background: #f9f9fb; border: 1px solid #eee; }
-  .signal-box .signal-title { font-size: 14px; font-weight: 700; }
-  .signal-box .signal-detail { font-size: 12px; color: #666; margin-top: 4px; }
+/* Trade button — Polymarket uses solid blue CTAs */
+.trade-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 14px; background: var(--blue); color: #fff;
+  border-radius: 20px; text-decoration: none;
+  font-size: 12px; font-weight: 600;
+  transition: all var(--transition);
+  border: none; cursor: pointer;
+}
+.trade-btn:hover { background: #2563eb; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+.trade-btn:active { transform: scale(0.97); }
+.trade-btn-lg { padding: 12px 28px; font-size: 15px; border-radius: 24px; }
 
-  @media (max-width: 700px) {
-    .calendar { grid-template-columns: 1fr; }
-    .day-col { border-right: none; border-bottom: 1px solid #eee; }
-  }
+/* Recommendations — clean data table */
+.recs-panel {
+  margin: 0 24px 24px; background: var(--surface);
+  border-radius: var(--radius); border: 1px solid var(--border);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.recs-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.recs-header h3 { font-size: 15px; font-weight: 700; }
+.recs-toggle { display: flex; gap: 4px; }
+.recs-toggle button {
+  padding: 5px 12px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 20px; font-size: 12px; cursor: pointer; font-weight: 500;
+  color: var(--text-secondary); transition: all var(--transition);
+}
+.recs-toggle button:hover { border-color: var(--text-muted); }
+.recs-toggle button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.recs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.recs-table th {
+  text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border);
+  color: var(--text-muted); font-weight: 600; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  white-space: nowrap; user-select: none;
+}
+.recs-table th.sortable { cursor: pointer; transition: color var(--transition); }
+.recs-table th.sortable:hover { color: var(--text); }
+.recs-table th.sortable::after {
+  content: '⇅'; margin-left: 4px; font-size: 10px; opacity: 0.3;
+}
+.recs-table th.sortable.asc::after { content: '↑'; opacity: 1; color: var(--blue); }
+.recs-table th.sortable.desc::after { content: '↓'; opacity: 1; color: var(--blue); }
+.recs-table td { padding: 12px 12px; border-bottom: 1px solid var(--border-light); }
+.recs-table tr { cursor: pointer; transition: background var(--transition); }
+.recs-table tr:hover { background: var(--surface-hover); }
+.side-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+}
+.side-badge.yes { background: var(--green-bg); color: #15803d; }
+.side-badge.no { background: var(--red-bg); color: var(--red); }
+.stars { color: var(--yellow); letter-spacing: 1px; font-size: 14px; }
+.conf-bar {
+  display: inline-block; height: 5px; border-radius: 3px;
+  background: var(--border); width: 48px; vertical-align: middle;
+  margin-left: 6px; overflow: hidden;
+}
+.conf-bar-fill { height: 100%; border-radius: 3px; }
+.ev-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
+.ev-cell.pos { color: #15803d; }
+.ratio-bar { display: flex; align-items: center; gap: 6px; }
+.ratio-visual { width: 56px; height: 18px; background: var(--accent-light); border-radius: 4px; overflow: hidden; position: relative; }
+.ratio-conf { height: 100%; background: var(--blue); opacity: 0.2; position: absolute; left: 0; top: 0; }
+.ratio-ev { height: 100%; background: var(--green); position: absolute; left: 0; top: 0; }
+
+/* Modal — Polymarket: clean, centered, generous spacing */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  z-index: 200; justify-content: center; align-items: flex-start;
+  padding: 80px 20px; overflow-y: auto;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border-radius: 16px; max-width: 480px; width: 100%;
+  overflow: hidden; box-shadow: var(--shadow-lg);
+  animation: modalIn 200ms ease-out;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-header {
+  padding: 20px 24px; border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.modal-close {
+  width: 32px; height: 32px; border-radius: 50%; border: none;
+  background: var(--accent-light); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary); transition: all var(--transition);
+}
+.modal-close:hover { background: var(--border); }
+.modal-body { padding: 24px; }
+.modal-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+.modal-stat {
+  text-align: center; padding: 16px; background: var(--accent-light);
+  border-radius: var(--radius-sm);
+}
+.modal-stat .val { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.modal-stat .lbl { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+.modal-detail {
+  display: flex; justify-content: space-between; padding: 10px 0;
+  border-bottom: 1px solid var(--border-light); font-size: 13px;
+}
+.modal-detail .key { color: var(--text-secondary); }
+.modal-detail .value { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Signal box — Polymarket Yes/No button style */
+.signal-box {
+  margin-top: 20px; padding: 16px; border-radius: var(--radius);
+  text-align: center;
+}
+.signal-box.buy-yes { background: var(--green-bg); border: 1px solid var(--green-border); }
+.signal-box.buy-no { background: var(--red-bg); border: 1px solid var(--red-border); }
+.signal-box.no-edge { background: var(--accent-light); border: 1px solid var(--border); }
+.signal-box .signal-title { font-size: 15px; font-weight: 700; }
+.signal-box .signal-detail { font-size: 12px; color: var(--text-secondary); margin-top: 8px; line-height: 1.7; }
+
+/* Coming Soon section */
+.coming-soon {
+  margin: 0 24px 20px; background: var(--surface);
+  border-radius: var(--radius); border: 1px solid var(--border);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.cs-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+.cs-title { display: flex; align-items: center; gap: 10px; }
+.cs-title h3 { font-size: 15px; font-weight: 700; }
+.cs-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.cs-subtitle { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.cs-filters { display: flex; gap: 4px; }
+.cs-filters button {
+  padding: 5px 12px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 20px; font-size: 12px; cursor: pointer; font-weight: 500;
+  color: var(--text-secondary); transition: all var(--transition);
+}
+.cs-filters button:hover { border-color: var(--text-muted); }
+.cs-filters button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0; }
+.cs-card {
+  padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; transition: background var(--transition);
+}
+.cs-card:hover { background: var(--surface-hover); }
+.cs-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+.cs-icon {
+  width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 11px; flex-shrink: 0;
+}
+.cs-info { flex: 1; }
+.cs-ticker { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+.cs-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.cs-meta .eps-tag { color: var(--text-secondary); }
+.cs-right { display: flex; align-items: center; gap: 12px; }
+.cs-pct { text-align: right; }
+.cs-pct .val { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.cs-pct .lbl { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+.cs-edge {
+  font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600;
+  white-space: nowrap;
+}
+.cs-edge.pos { background: var(--green-bg); color: #15803d; }
+.cs-edge.neg { background: var(--red-bg); color: var(--red); }
+.cs-edge.neutral { background: var(--accent-light); color: var(--text-secondary); }
+.cs-countdown {
+  font-size: 11px; color: var(--text-muted); font-weight: 600;
+  background: var(--accent-light); padding: 3px 8px; border-radius: 4px;
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.cs-countdown.urgent { background: #fef3c7; color: #92400e; }
+.cs-countdown.today { background: var(--red-bg); color: var(--red); animation: pulse 2s infinite; }
+
+/* Loading skeleton */
+.skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius-sm); }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .calendar { grid-template-columns: 1fr; margin: 0 12px 16px; }
+  .day-col { border-right: none; border-bottom: 1px solid var(--border-light); }
+  .day-col:last-child { border-bottom: none; }
+  .recs-panel { margin: 0 12px 16px; }
+  .recs-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .recs-table { font-size: 12px; }
+  .header { padding: 0 16px; }
+}
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>Earnings Calendar</h1>
-  <div class="header-nav">
+  <div class="nav">
     <a href="ui.html">Backtest</a>
     <a href="calendar.html" class="active">Calendar</a>
   </div>
 </div>
 
-<div class="month-title">
+<div class="cal-title">
   <div class="month" id="month-label"></div>
   <h2>Earnings Calendar</h2>
 </div>
 
 <div class="week-nav">
-  <button onclick="changeWeek(-1)">&#8249;</button>
+  <button onclick="changeWeek(-1)" aria-label="Previous week">&#8249;</button>
   <span class="week-label" id="week-label"></span>
-  <button onclick="changeWeek(1)">&#8250;</button>
+  <button onclick="changeWeek(1)" aria-label="Next week">&#8250;</button>
 </div>
 
-<div class="calendar" id="calendar"></div>
+<!-- Coming Soon — urgent trades -->
+<div class="coming-soon" id="coming-soon" style="display:none">
+  <div class="cs-header">
+    <div class="cs-title">
+      <span class="cs-dot"></span>
+      <h3>Coming Soon</h3>
+      <span class="cs-subtitle" id="cs-subtitle"></span>
+    </div>
+    <div class="cs-filters">
+      <button class="active" onclick="setCSFilter('all')">All</button>
+      <button onclick="setCSFilter('edge')">Has Edge</button>
+      <button onclick="setCSFilter('polymarket')">On Polymarket</button>
+    </div>
+  </div>
+  <div class="cs-grid" id="cs-grid"></div>
+</div>
+
+<div class="calendar" id="calendar">
+  <!-- Loading skeleton -->
+  <div class="day-col" style="padding:20px"><div class="skeleton" style="height:80px;margin-bottom:8px"></div><div class="skeleton" style="height:60px"></div></div>
+  <div class="day-col" style="padding:20px"><div class="skeleton" style="height:80px;margin-bottom:8px"></div><div class="skeleton" style="height:60px;margin-bottom:8px"></div><div class="skeleton" style="height:60px"></div></div>
+  <div class="day-col" style="padding:20px"><div class="skeleton" style="height:80px;margin-bottom:8px"></div><div class="skeleton" style="height:60px"></div></div>
+  <div class="day-col" style="padding:20px"><div class="skeleton" style="height:80px"></div></div>
+  <div class="day-col" style="padding:20px"><div class="skeleton" style="height:80px"></div></div>
+</div>
 
 <div class="recs-panel" id="recs-panel" style="display:none">
   <div class="recs-header">
@@ -155,22 +416,25 @@
       <button onclick="setRecSort('risk')">Best Risk/Reward</button>
     </div>
   </div>
+  <div style="overflow-x:auto">
   <table class="recs-table">
     <thead><tr>
-      <th>Rating</th>
-      <th>Ticker</th>
-      <th>Date</th>
+      <th class="sortable" data-col="rating">Rating</th>
+      <th class="sortable" data-col="ticker">Ticker</th>
+      <th class="sortable" data-col="date">Date</th>
       <th>Side</th>
-      <th>Beat Rate</th>
-      <th>Price</th>
-      <th>Edge</th>
-      <th>EV / $100</th>
-      <th>Confidence</th>
-      <th>Conf / EV Ratio</th>
-      <th>Kelly</th>
+      <th class="sortable" data-col="beat_rate">Beat Rate</th>
+      <th class="sortable" data-col="price">Price</th>
+      <th class="sortable" data-col="edge">Edge</th>
+      <th class="sortable" data-col="ev">EV / $100</th>
+      <th class="sortable" data-col="confidence">Confidence</th>
+      <th class="sortable" data-col="ratio">Ratio</th>
+      <th class="sortable" data-col="kelly">Kelly</th>
+      <th></th>
     </tr></thead>
     <tbody id="recs-body"></tbody>
   </table>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
@@ -183,15 +447,8 @@ let RECS = [];
 let weekOffset = 0;
 let recSort = 'rating';
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-function escapeAttr(str) {
-  return String(str).replace(/[&'"<>]/g, c => ({'&':'&amp;',"'":'&#39;','"':'&quot;','<':'&lt;','>':'&gt;'}[c]));
-}
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+function escapeAttr(str) { return String(str).replace(/[&'"<>]/g, c => ({'&':'&amp;',"'":'&#39;','"':'&quot;','<':'&lt;','>':'&gt;'}[c])); }
 
 async function loadData() {
   try {
@@ -200,97 +457,161 @@ async function loadData() {
     DATA = await resp.json();
   } catch(e) {
     console.error('Failed to load calendar data:', e);
-    document.getElementById('calendar').innerHTML = '<div style="text-align:center;padding:40px;color:#dc2626">Error loading data. Run generate_calendar.py first.</div>';
+    document.getElementById('calendar').innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--red)"><div style="font-size:24px;margin-bottom:8px">⚠️</div>Error loading data.<br><span style="font-size:12px;color:var(--text-muted)">Run generate_calendar.py first</span></div>';
     return;
   }
-  // Also load backtest data for extended info
-  try {
-    const resp2 = await fetch('output/ui_data.json');
-    if (resp2.ok) window.BACKTEST = await resp2.json();
-    else window.BACKTEST = {};
-  } catch(e) { window.BACKTEST = {}; }
-  try {
-    const resp3 = await fetch('output/recommendations.json');
-    RECS = await resp3.json();
-  } catch(e) { RECS = []; }
+  try { const r2 = await fetch('output/ui_data.json'); if (r2.ok) window.BACKTEST = await r2.json(); else window.BACKTEST = {}; } catch(e) { window.BACKTEST = {}; }
+  try { const r3 = await fetch('output/recommendations.json'); RECS = await r3.json(); } catch(e) { RECS = []; }
   render();
   renderRecs();
+  renderComingSoon();
+}
+
+let csFilter = 'all';
+function setCSFilter(filter) {
+  csFilter = filter;
+  document.querySelectorAll('.cs-filters button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderComingSoon();
+}
+
+function renderComingSoon() {
+  const panel = document.getElementById('coming-soon');
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // Get upcoming earnings within next 5 days, not yet reported
+  const upcoming = DATA.filter(e => {
+    if (e.reported) return false;
+    const d = new Date(e.date);
+    const diff = (d - today) / (1000 * 60 * 60 * 24);
+    return diff >= -1 && diff <= 5;
+  }).sort((a, b) => a.date.localeCompare(b.date));
+
+  // Apply filter
+  let filtered = upcoming;
+  if (csFilter === 'edge') {
+    filtered = upcoming.filter(e => {
+      if (!e.has_polymarket || e.beat_rate == null || e.polymarket_price == null) return false;
+      return Math.abs(e.beat_rate - e.polymarket_price) >= 5;
+    });
+  } else if (csFilter === 'polymarket') {
+    filtered = upcoming.filter(e => e.has_polymarket);
+  }
+
+  if (filtered.length === 0) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+
+  document.getElementById('cs-subtitle').textContent = `${filtered.length} earnings in the next few days`;
+
+  document.getElementById('cs-grid').innerHTML = filtered.map(e => {
+    const earnDate = new Date(e.date);
+    const diffDays = Math.ceil((earnDate - today) / (1000 * 60 * 60 * 24));
+    let countdown, countdownClass;
+    if (diffDays <= 0) { countdown = 'Today'; countdownClass = 'today'; }
+    else if (diffDays === 1) { countdown = 'Tomorrow'; countdownClass = 'urgent'; }
+    else { countdown = `${diffDays} days`; countdownClass = ''; }
+
+    const displayPct = e.polymarket_price != null ? e.polymarket_price : e.beat_rate;
+    const dotClass = displayPct >= 75 ? 'green' : displayPct >= 50 ? 'yellow' : 'red';
+    const epsStr = e.eps_estimate != null ? `$${e.eps_estimate.toFixed(2)} EPS` : '';
+
+    let edgeHtml = '';
+    if (e.has_polymarket && e.beat_rate != null && e.polymarket_price != null) {
+      const edge = e.beat_rate - e.polymarket_price;
+      if (edge >= 5) edgeHtml = `<span class="cs-edge pos">+${edge}%</span>`;
+      else if (edge <= -5) edgeHtml = `<span class="cs-edge neg">${edge}%</span>`;
+      else edgeHtml = `<span class="cs-edge neutral">~0%</span>`;
+    }
+
+    const tradeBtn = e.polymarket_url
+      ? `<a href="${e.polymarket_url}" target="_blank" rel="noopener" class="trade-btn" onclick="event.stopPropagation()" style="font-size:11px;padding:5px 12px">Trade ↗</a>`
+      : '';
+
+    const dayName = earnDate.toLocaleDateString('en', { weekday: 'short' });
+    const dateStr = earnDate.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+
+    return `
+      <div class="cs-card" onclick="openModal('${escapeAttr(e.ticker)}')">
+        <div class="cs-left">
+          <div class="cs-icon">${e.ticker.substring(0,3)}</div>
+          <div class="cs-info">
+            <div class="cs-ticker">${escapeHtml(e.ticker)}</div>
+            <div class="cs-meta">
+              <span class="eps-tag">${epsStr}</span>
+              ${epsStr ? ' · ' : ''}${dayName} ${dateStr}
+            </div>
+          </div>
+        </div>
+        <div class="cs-right">
+          ${edgeHtml}
+          <div class="cs-pct">
+            <div class="val"><span class="beat-dot ${dotClass}"></span>${displayPct != null ? displayPct + '%' : '?'}</div>
+            <div class="lbl">${e.has_polymarket ? 'market' : 'hist'}</div>
+          </div>
+          <span class="cs-countdown ${countdownClass}">${countdown}</span>
+          ${tradeBtn}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function getWeekDays(offset) {
   const today = new Date();
-  // getDay(): 0=Sun, 1=Mon...6=Sat
-  // We want to show the upcoming week if today is a weekend
-  let dow = today.getDay(); // 0=Sun
-  if (dow === 0) dow = 7;   // treat Sunday as 7 so Monday calc works
+  let dow = today.getDay();
+  if (dow === 0) dow = 7;
   const monday = new Date(today);
   monday.setDate(today.getDate() - dow + 1 + offset * 7);
-  // If today is Sat/Sun and offset=0, show NEXT week instead of current
   const todayDay = today.getDay();
-  if (offset === 0 && (todayDay === 0 || todayDay === 6)) {
-    monday.setDate(monday.getDate() + 7);
-  }
+  if (offset === 0 && (todayDay === 0 || todayDay === 6)) monday.setDate(monday.getDate() + 7);
   const days = [];
-  for (let i = 0; i < 5; i++) {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    days.push(d);
-  }
+  for (let i = 0; i < 5; i++) { const d = new Date(monday); d.setDate(monday.getDate() + i); days.push(d); }
   return days;
 }
 
 function fmt(d) {
-  // Use local date to avoid UTC timezone shift
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function fmtShort(d) { return d.toLocaleDateString('en', { month: 'short', day: 'numeric' }); }
+const DOW = ['Mon','Tue','Wed','Thu','Fri'];
 
-const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-
-function changeWeek(dir) {
-  weekOffset += dir;
-  render();
-}
+function changeWeek(dir) { weekOffset += dir; render(); }
 
 function render() {
   const days = getWeekDays(weekOffset);
   const today = fmt(new Date());
 
-  // Month label
   const months = [...new Set(days.map(d => d.toLocaleDateString('en', { month: 'long', year: 'numeric' })))];
-  document.getElementById('month-label').textContent = months.join(' - ');
+  document.getElementById('month-label').textContent = months.join(' – ');
   document.getElementById('week-label').textContent = `${fmtShort(days[0])} – ${fmtShort(days[4])}`;
 
-  const cal = document.getElementById('calendar');
-  cal.innerHTML = days.map((day, i) => {
+  document.getElementById('calendar').innerHTML = days.map((day, i) => {
     const dateStr = fmt(day);
     const isToday = dateStr === today;
     const items = DATA.filter(e => e.date === dateStr);
 
     let body = '';
     if (items.length === 0) {
-      body = `<div class="no-earnings"><div class="icon">&#x24;</div>No earnings</div>`;
+      body = '<div class="no-earnings"><div class="icon">$</div>No earnings</div>';
     } else {
       body = items.map(e => {
-        // Show Polymarket price as main "beats" % (like Polymarket does)
-        // Fall back to historical beat rate if no Polymarket market
         const displayPct = e.polymarket_price != null ? e.polymarket_price : e.beat_rate;
         const dotClass = displayPct >= 75 ? 'green' : displayPct >= 50 ? 'yellow' : 'red';
         const epsStr = e.eps_estimate != null ? `$${e.eps_estimate.toFixed(2)} EPS` : 'EPS N/A';
 
         let tags = '';
         if (e.has_polymarket && e.beat_rate != null && e.polymarket_price != null) {
-          // Show edge: our historical beat rate vs market price
           const edge = e.beat_rate - e.polymarket_price;
           if (Math.abs(edge) >= 5) {
             const edgeClass = edge > 0 ? 'edge-pos' : 'edge-neg';
             tags += `<span class="tag ${edgeClass}">${edge > 0 ? '+' : ''}${edge}% edge</span>`;
           }
-          tags += `<span class="tag" style="font-size:9px">hist: ${e.beat_rate}%</span>`;
+          tags += `<span class="tag" style="font-size:9px">hist ${e.beat_rate}%</span>`;
         }
+
+        const polyLink = e.polymarket_url
+          ? `<a href="${e.polymarket_url}" target="_blank" rel="noopener" class="poly-link" title="Trade on Polymarket" onclick="event.stopPropagation()">↗</a>`
+          : '';
 
         return `
           <div class="earning-card" onclick="openModal('${escapeAttr(e.ticker)}')">
@@ -298,7 +619,7 @@ function render() {
               <div class="ticker-info">
                 <div class="ticker-icon">${e.ticker.substring(0,3)}</div>
                 <div>
-                  <div class="ticker-name">${e.ticker}</div>
+                  <div class="ticker-name">${escapeHtml(e.ticker)}${polyLink}</div>
                   <div class="eps">${epsStr}</div>
                 </div>
               </div>
@@ -308,8 +629,7 @@ function render() {
               </div>
             </div>
             ${tags ? `<div class="bottom-row">${tags}</div>` : ''}
-          </div>
-        `;
+          </div>`;
       }).join('');
     }
 
@@ -320,8 +640,7 @@ function render() {
           <div class="dom">${day.getDate()}</div>
         </div>
         <div class="day-body">${body}</div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 }
 
@@ -329,8 +648,6 @@ function openModal(ticker) {
   const e = DATA.find(d => d.ticker === ticker);
   if (!e) return;
   const bt = window.BACKTEST?.[ticker];
-
-  // Check if we have a recommendation for this ticker
   const rec = RECS.find(r => r.ticker === ticker);
 
   let signal = '';
@@ -339,29 +656,24 @@ function openModal(ticker) {
     const boxClass = isYes ? 'buy-yes' : 'buy-no';
     const cr = rec.confidence_ratio;
     const numStars = cr > 5 ? 5 : cr > 3 ? 4 : cr > 1.5 ? 3 : cr > 0.5 ? 2 : 1;
-    const starsStr = '\u2605'.repeat(numStars) + '\u2606'.repeat(5 - numStars);
+    const starsStr = '★'.repeat(numStars) + '☆'.repeat(5 - numStars);
 
     signal = `
       <div class="signal-box ${boxClass}">
-        <div class="signal-title" style="font-size:16px">
-          <span style="color:#f59e0b">${starsStr}</span>
-          Buy ${rec.side} @ ${Math.round(rec.cost * 100)}c
+        <div class="signal-title">
+          <span style="color:var(--yellow);font-size:16px">${starsStr}</span>
+          Buy ${rec.side} @ ${Math.round(rec.cost * 100)}¢
         </div>
-        <div class="signal-detail" style="margin-top:8px;font-size:13px;line-height:1.8">
-          <div><strong>Edge:</strong> +${(rec.edge * 100).toFixed(1)}% | <strong>Win Prob:</strong> ${(rec.win_prob * 100).toFixed(1)}%</div>
-          <div><strong>Win:</strong> +$${rec.payout_if_win.toFixed(0)} | <strong>Lose:</strong> -$${rec.loss_if_lose.toFixed(0)}</div>
-          <div><strong>EV per $100:</strong> $${rec.ev_per_bet.toFixed(1)}</div>
-          <div><strong>Confidence:</strong> ${rec.confidence}% | <strong>EV/Risk:</strong> ${rec.ev_to_risk.toFixed(2)}</div>
-          <div><strong>Confidence/EV Ratio:</strong> ${rec.confidence_ratio.toFixed(2)} (${cr > 3 ? 'Strong' : cr > 1 ? 'Moderate' : 'Weak'})</div>
+        <div class="signal-detail">
+          <div><strong>Edge:</strong> +${(rec.edge * 100).toFixed(1)}% · <strong>Win Prob:</strong> ${(rec.win_prob * 100).toFixed(1)}%</div>
+          <div><strong>Win:</strong> +$${rec.payout_if_win.toFixed(0)} · <strong>Lose:</strong> -$${rec.loss_if_lose.toFixed(0)}</div>
+          <div><strong>EV per $100:</strong> $${rec.ev_per_bet.toFixed(1)} · <strong>Confidence:</strong> ${rec.confidence}%</div>
           <div><strong>Kelly:</strong> ${(rec.kelly_fraction * 100).toFixed(1)}% of bankroll</div>
-          <div style="margin-top:4px;font-size:11px;color:#888">Backtest: ${rec.bt_trades} trades, ${rec.bt_win_rate != null ? rec.bt_win_rate + '% win rate' : 'N/A'}, P&L $${rec.bt_pnl}</div>
+          <div style="margin-top:4px;font-size:11px;color:var(--text-muted)">Backtest: ${rec.bt_trades} trades, ${rec.bt_win_rate != null ? rec.bt_win_rate + '% win' : 'N/A'}, P&L $${rec.bt_pnl}</div>
         </div>
       </div>`;
   } else if (e.polymarket_price != null && e.beat_rate != null) {
-    signal = `<div class="signal-box no-edge">
-      <div class="signal-title">No Edge</div>
-      <div class="signal-detail">Market price is close to historical beat rate</div>
-    </div>`;
+    signal = '<div class="signal-box no-edge"><div class="signal-title">No Edge</div><div class="signal-detail">Market price aligns with historical beat rate</div></div>';
   }
 
   let backtestInfo = '';
@@ -370,15 +682,14 @@ function openModal(ticker) {
     const wr = bt.market_average_win_rate || 0;
     const trades = bt.market_average_num_trades || 0;
     backtestInfo = `
-      <div class="modal-detail"><span class="key">Backtest P&L (Mkt Avg)</span><span class="value" style="color:${pnl >= 0 ? '#16a34a' : '#dc2626'}">$${pnl.toFixed(0)}</span></div>
-      <div class="modal-detail"><span class="key">Win Rate</span><span class="value">${trades > 0 ? Math.round(wr * 100) + '%' : '-'} (${trades} trades)</span></div>
-    `;
+      <div class="modal-detail"><span class="key">Backtest P&L</span><span class="value" style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">$${pnl.toFixed(0)}</span></div>
+      <div class="modal-detail"><span class="key">Win Rate</span><span class="value">${trades > 0 ? Math.round(wr * 100) + '%' : '–'} (${trades} trades)</span></div>`;
   }
 
   document.getElementById('modal').innerHTML = `
     <div class="modal-header">
-      <h2>${ticker}</h2>
-      <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('open')">&#x2715;</button>
+      <h2>${escapeHtml(ticker)}</h2>
+      <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('open')" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
       <div class="modal-stats">
@@ -392,13 +703,13 @@ function openModal(ticker) {
         </div>
       </div>
       <div class="modal-detail"><span class="key">Report Date</span><span class="value">${e.date}</span></div>
-      <div class="modal-detail"><span class="key">EPS Estimate</span><span class="value">${e.eps_estimate != null ? '$' + e.eps_estimate.toFixed(2) : 'N/A'}</span></div>
+      <div class="modal-detail"><span class="key">EPS Estimate</span><span class="value">${e.eps_estimate != null ? '$' + e.eps_estimate.toFixed(2) : 'N/A'}${e.eps_type && e.eps_type !== 'consensus' ? ' <span style="font-size:10px;color:var(--text-muted)">' + e.eps_type.toUpperCase() + '</span>' : ''}</span></div>
       <div class="modal-detail"><span class="key">EPS Range</span><span class="value">${e.eps_low != null ? '$' + e.eps_low.toFixed(2) + ' – $' + e.eps_high.toFixed(2) : 'N/A'}</span></div>
       <div class="modal-detail"><span class="key">Last Quarter EPS</span><span class="value">${e.last_eps != null ? '$' + e.last_eps.toFixed(2) : 'N/A'}</span></div>
       ${backtestInfo}
       ${signal}
-    </div>
-  `;
+      ${e.polymarket_url ? `<div style="margin-top:20px;text-align:center"><a href="${e.polymarket_url}" target="_blank" rel="noopener" class="trade-btn trade-btn-lg">Trade on Polymarket ↗</a></div>` : ''}
+    </div>`;
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -408,11 +719,62 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') changeWeek(1);
 });
 
+let recSortCol = 'rating';
+let recSortDir = 'desc'; // 'asc' or 'desc'
+
 function setRecSort(sort) {
-  recSort = sort;
+  recSortCol = sort;
+  recSortDir = 'desc';
   document.querySelectorAll('.recs-toggle button').forEach(b => b.classList.remove('active'));
   event.target.classList.add('active');
+  updateSortHeaders();
   renderRecs();
+}
+
+function toggleColSort(col) {
+  if (recSortCol === col) {
+    recSortDir = recSortDir === 'desc' ? 'asc' : 'desc';
+  } else {
+    recSortCol = col;
+    recSortDir = 'desc';
+  }
+  // Also update pill buttons to reflect column sort
+  document.querySelectorAll('.recs-toggle button').forEach(b => b.classList.remove('active'));
+  updateSortHeaders();
+  renderRecs();
+}
+
+function updateSortHeaders() {
+  document.querySelectorAll('.recs-table th.sortable').forEach(th => {
+    th.classList.remove('asc', 'desc');
+    if (th.dataset.col === recSortCol) {
+      th.classList.add(recSortDir);
+    }
+  });
+}
+
+// Attach click handlers to sortable headers after DOM ready
+function initSortHeaders() {
+  document.querySelectorAll('.recs-table th.sortable').forEach(th => {
+    th.addEventListener('click', () => toggleColSort(th.dataset.col));
+  });
+}
+
+function getRecSortFn() {
+  const dir = recSortDir === 'asc' ? 1 : -1;
+  const fns = {
+    rating: (a, b) => (a.confidence_ratio - b.confidence_ratio) * dir,
+    ticker: (a, b) => a.ticker.localeCompare(b.ticker) * dir,
+    date: (a, b) => a.date.localeCompare(b.date) * dir,
+    beat_rate: (a, b) => (a.beat_rate - b.beat_rate) * dir,
+    price: (a, b) => (a.price - b.price) * dir,
+    edge: (a, b) => (a.edge - b.edge) * dir,
+    ev: (a, b) => (a.ev_per_bet - b.ev_per_bet) * dir,
+    confidence: (a, b) => (a.confidence - b.confidence) * dir,
+    ratio: (a, b) => (a.confidence_ratio - b.confidence_ratio) * dir,
+    kelly: (a, b) => (a.kelly_fraction - b.kelly_fraction) * dir,
+  };
+  return fns[recSortCol] || fns.rating;
 }
 
 function renderRecs() {
@@ -420,35 +782,25 @@ function renderRecs() {
   document.getElementById('recs-panel').style.display = '';
 
   let sorted = [...RECS];
-  if (recSort === 'rating') sorted.sort((a, b) => b.confidence_ratio - a.confidence_ratio);
-  else if (recSort === 'ev') sorted.sort((a, b) => b.ev_per_bet - a.ev_per_bet);
-  else if (recSort === 'confidence') sorted.sort((a, b) => b.confidence - a.confidence);
-  else if (recSort === 'risk') sorted.sort((a, b) => b.ev_to_risk - a.ev_to_risk);
+  sorted.sort(getRecSortFn());
 
   const maxEV = Math.max(1, ...sorted.map(r => Math.abs(r.ev_per_bet)));
-  const maxConf = 100;
 
   document.getElementById('recs-body').innerHTML = sorted.map(r => {
-    // Stars
     const cr = r.confidence_ratio;
     const numStars = cr > 5 ? 5 : cr > 3 ? 4 : cr > 1.5 ? 3 : cr > 0.5 ? 2 : 1;
-    const stars = '<span class="stars">' + '\u2605'.repeat(numStars) + '<span style="color:#ddd">' + '\u2605'.repeat(5 - numStars) + '</span></span>';
-
-    // Confidence bar color
-    const confColor = r.confidence >= 90 ? '#16a34a' : r.confidence >= 75 ? '#3b82f6' : r.confidence >= 60 ? '#f59e0b' : '#dc2626';
-
-    // Ratio visual: show confidence vs EV proportionally
+    const stars = '<span class="stars">' + '★'.repeat(numStars) + '<span style="color:#e4e4e7">' + '★'.repeat(5 - numStars) + '</span></span>';
+    const confColor = r.confidence >= 90 ? 'var(--green)' : r.confidence >= 75 ? 'var(--blue)' : r.confidence >= 60 ? 'var(--yellow)' : 'var(--red)';
     const evNorm = Math.min(100, (r.ev_per_bet / maxEV) * 100);
-    const confNorm = r.confidence;
 
     return `<tr onclick="openModal('${escapeAttr(r.ticker)}')">
       <td>${stars}</td>
-      <td><strong>${r.ticker}</strong></td>
-      <td>${r.date}</td>
+      <td><strong>${escapeHtml(r.ticker)}</strong></td>
+      <td style="color:var(--text-secondary)">${r.date}</td>
       <td><span class="side-badge ${r.side.toLowerCase()}">${r.side}</span></td>
       <td>${r.beat_rate}%</td>
       <td>${Math.round(r.price * 100)}%</td>
-      <td style="color:${r.edge > 0.1 ? '#16a34a' : '#666'};font-weight:600">+${(r.edge * 100).toFixed(1)}%</td>
+      <td style="color:${r.edge > 0.1 ? '#15803d' : 'var(--text-secondary)'};font-weight:600">+${(r.edge * 100).toFixed(1)}%</td>
       <td class="ev-cell pos">$${r.ev_per_bet.toFixed(1)}</td>
       <td>
         ${r.confidence}%
@@ -457,17 +809,19 @@ function renderRecs() {
       <td>
         <div class="ratio-bar">
           <div class="ratio-visual">
-            <div class="ratio-conf" style="width:${confNorm}%"></div>
-            <div class="ratio-ev" style="width:${evNorm}%;opacity:0.6"></div>
+            <div class="ratio-conf" style="width:${r.confidence}%"></div>
+            <div class="ratio-ev" style="width:${evNorm}%;opacity:0.5"></div>
           </div>
           <span style="font-size:11px;font-weight:600">${cr.toFixed(1)}</span>
         </div>
       </td>
-      <td>${(r.kelly_fraction * 100).toFixed(1)}%</td>
+      <td style="font-variant-numeric:tabular-nums">${(r.kelly_fraction * 100).toFixed(1)}%</td>
+      <td>${r.polymarket_url ? `<a href="${r.polymarket_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="trade-btn">Trade ↗</a>` : '–'}</td>
     </tr>`;
   }).join('');
 }
 
+initSortHeaders();
 loadData();
 </script>
 </body>
